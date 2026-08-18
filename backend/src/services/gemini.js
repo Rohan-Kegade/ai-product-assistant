@@ -5,28 +5,49 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-export async function analyzeProduct(product) {
-  const prompt = `
-    Normalize the raw e-commerce product data into a clean, well-structured JSON object.
+export async function askMultiProductFollowUp(productsList, history) {
+  // 1. Convert React role names ("assistant") to Gemini role names ("model")
+  // 2. Omit the last message from history array so it can be passed to sendMessage
+  const formattedHistory = history.slice(0, -1).map((msg) => ({
+    role: msg.role === "assistant" ? "model" : "user",
+    parts: [{ text: msg.content }],
+  }));
 
-    Rules:
-    - Extract all meaningful facts with exact numbers, units, and qualifiers without inventing data.
-    - Deduplicate repeat info, but do not omit unique technical details.
-    - Convert unstructured text into structured fields.
-    - Separate technical specs, commercial/offers data, ratings, and manufacturer details.
-    - Group specs into logical nested objects (e.g., camera: { rear, front }, display: { size, refresh_rate }, specifications: { processor, memory }).
+  // Build system instruction combining data across all active products
+  const systemInstruction = `You are a helpful e-commerce product expert.
+    You have access to structured data for ${productsList.length} active product(s):
 
-    Raw Product Data:
-    ${JSON.stringify(product)}
-  `;
+    ${productsList
+      .map(
+        (prod, index) =>
+          `=== PRODUCT ${index + 1}: ${prod.title || "Amazon Product"} ===\n${JSON.stringify(
+            prod,
+            null,
+            2,
+          )}`,
+      )
+      .join("\n\n")}
 
-  const response = await ai.models.generateContent({
+    Instructions:
+    - Answer questions, evaluate specs, or highlight pros/cons strictly based on these products.
+    - When comparing multiple products, use clear Markdown tables for side-by-side spec comparisons.`;
+
+  // Create a multi-turn chat instance loaded with product context and history
+  const chat = ai.chats.create({
     model: "gemini-3.5-flash-lite",
+    history: formattedHistory,
     config: {
-      responseMimeType: "application/json",
+      systemInstruction: systemInstruction,
     },
-    contents: prompt,
   });
 
-  return JSON.parse(response.text);
+  // Extract the latest user question
+  const lastUserMessage = history[history.length - 1].content;
+
+  // Send the latest user prompt to the active session
+  const response = await chat.sendMessage({
+    message: lastUserMessage,
+  });
+
+  return response.text;
 }
