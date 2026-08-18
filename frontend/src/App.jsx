@@ -1,4 +1,6 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -431,9 +433,9 @@ function App() {
                         }`}
                       >
                         {!isUser && (
-                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mr-3 shrink-0 mt-1 shadow-md shadow-blue-500/10">
+                          <div className="w-8 h-8 rounded-lg bg-light border border-slate-300  flex items-center justify-center mr-3 shrink-0 mt-1 shadow-md shadow-blue-500/10">
                             <svg
-                              className="w-4 h-4 text-white"
+                              className="w-9 h-9 text-blue-600"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -441,8 +443,8 @@ function App() {
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 3v18m9-9H3"
+                                strokeWidth="1.5"
+                                d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
                               />
                             </svg>
                           </div>
@@ -456,15 +458,17 @@ function App() {
                           } px-4 py-3.5`}
                         >
                           <div
-                            className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${
+                            className={`text-[10px] font-bold tracking-wider mb-1.5 ${
                               isUser ? "text-slate-400" : "text-blue-600"
                             }`}
                           >
-                            {isUser ? "You" : "ProductAI"}
+                            {isUser ? "You" : "ProductIQ"}
                           </div>
 
-                          <div className="text-sm leading-6 whitespace-pre-wrap">
-                            {message.content}
+                          <div className="text-sm leading-6 markdown-content">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {message.content}
+                            </ReactMarkdown>
                           </div>
                         </div>
                       </div>
@@ -473,9 +477,9 @@ function App() {
 
                   {asking && (
                     <div className="flex items-start">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mr-3 shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-light border border-slate-300  flex items-center justify-center mr-3 shrink-0">
                         <svg
-                          className="w-4 h-4 text-white"
+                          className="w-9 h-9 text-blue-600"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -483,8 +487,8 @@ function App() {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 3v18m9-9H3"
+                            strokeWidth="1.5"
+                            d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
                           />
                         </svg>
                       </div>
