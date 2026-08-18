@@ -30,7 +30,8 @@ export async function askMultiProductFollowUp(productsList, history) {
 
     Instructions:
     - Answer questions, evaluate specs, or highlight pros/cons strictly based on these products.
-    - When comparing multiple products, use clear Markdown tables for side-by-side spec comparisons.`;
+    - When comparing multiple products, use clear Markdown tables for side-by-side spec comparisons.
+    - If the user asks general knowledge questions, personal questions, coding queries, or anything unrelated to the active product deck, politely decline by stating: "I can only answer questions related to the active products in your deck."`;
 
   // Create a multi-turn chat instance loaded with product context and history
   const chat = ai.chats.create({
