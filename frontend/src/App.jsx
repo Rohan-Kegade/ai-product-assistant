@@ -343,27 +343,6 @@ function App() {
 
           {/* Content */}
           <div className="flex-1 min-h-0 p-4 md:p-6 lg:p-8 flex flex-col max-w-5xl mx-auto w-full">
-            {/* Chat Header */}
-            <div className="pb-4 mb-2 border-b border-slate-200/60 flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3"></div>
-
-              {products.length > 0 && (
-                <div className="hidden md:flex items-center gap-1.5">
-                  {products.slice(0, 5).map((product, index) => (
-                    <div
-                      key={product.id}
-                      title={product.title}
-                      className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-xs"
-                    >
-                      <span className="text-[9px] font-bold text-slate-500">
-                        {index + 1}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Messages Stream */}
             <div className="flex-1 min-h-0 overflow-y-auto my-2">
               {messages.length === 0 ? (
@@ -400,6 +379,10 @@ function App() {
 
                   <div className="flex flex-wrap justify-center gap-2 mt-6">
                     {[
+                      "Summarize key features",
+                      "Biggest pros and cons?",
+                      "Is this worth buying?",
+                      "What's in the box?",
                       "Compare these products",
                       "Which one is better?",
                       "Show key differences",
@@ -458,14 +441,20 @@ function App() {
                           } px-4 py-3.5`}
                         >
                           <div
-                            className={`text-[10px] font-bold tracking-wider mb-1.5 ${
-                              isUser ? "text-slate-400" : "text-blue-600"
+                            className={`text-[12px] font-bold tracking-wider mb-1.5 ${
+                              isUser ? "text-slate-100" : "text-blue-600"
                             }`}
                           >
                             {isUser ? "You" : "ProductIQ"}
                           </div>
 
-                          <div className="text-sm leading-6 markdown-content">
+                          <div
+                            className={`text-sm prose max-w-none ${
+                              message.role === "user"
+                                ? "prose-invert"
+                                : "prose-slate"
+                            }`}
+                          >
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {message.content}
                             </ReactMarkdown>
