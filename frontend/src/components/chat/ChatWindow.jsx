@@ -1,4 +1,5 @@
 import { ChatBubble } from "./ChatBubble";
+import { useEffect } from "react";
 
 const SUGGESTED_PROMPTS = [
   "Summarize key features",
@@ -16,7 +17,18 @@ export function ChatWindow({
   asking,
   productsCount,
   onSelectPrompt,
+  containerRef,
 }) {
+  // Smoothly scroll the container to the maximum height on content change
+  useEffect(() => {
+    if (containerRef?.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages, asking, containerRef]);
+
   if (messages.length === 0) {
     return (
       <div className="h-full flex flex-col items-center justify-center px-6">

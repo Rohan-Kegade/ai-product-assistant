@@ -2,6 +2,7 @@ import { Sidebar } from "./components/sidebar/Sidebar";
 import { ChatWindow } from "./components/chat/ChatWindow";
 import { ChatInput } from "./components/chat/ChatInput";
 import { useProductDeck } from "./hooks/useProductDeck";
+import { useRef } from "react";
 
 export default function App() {
   const {
@@ -19,6 +20,8 @@ export default function App() {
     handleRemoveProduct,
     handleAskQuestion,
   } = useProductDeck();
+
+  const chatContainerRef = useRef(null);
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
@@ -78,12 +81,16 @@ export default function App() {
 
           {/* Chat Workspace */}
           <div className="flex-1 min-h-0 p-4 md:p-6 lg:p-8 flex flex-col max-w-5xl mx-auto w-full">
-            <div className="flex-1 min-h-0 overflow-y-auto my-2">
+            <div
+              ref={chatContainerRef}
+              className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none]"
+            >
               <ChatWindow
                 messages={messages}
                 asking={asking}
                 productsCount={products.length}
                 onSelectPrompt={(promptText) => setQuestion(promptText)}
+                containerRef={chatContainerRef}
               />
             </div>
 
