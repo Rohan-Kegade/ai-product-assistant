@@ -56,7 +56,7 @@ export default function App() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-sm font-bold text-slate-900">
+                <h1 className="text-sm font-bold uppercase text-slate-900">
                   Product Research
                 </h1>
                 <p className="text-[11px] text-slate-400 mt-0.5">
