@@ -273,7 +273,7 @@ function App() {
                           </p>
 
                           {product.price && (
-                            <p className="text-xs text-white font-semibold mt-1">
+                            <p className="text-xs text-slate-300 font-semibold mt-1">
                               {product.price}
                             </p>
                           )}
