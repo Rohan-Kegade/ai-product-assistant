@@ -33,11 +33,16 @@ export function useProductDeck() {
     setProducts((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleAskQuestion = async () => {
-    const trimmedQuestion = question.trim();
+  const handleAskQuestion = async (questionText = question) => {
+    const trimmedQuestion = questionText.trim();
+
     if (!trimmedQuestion || products.length === 0 || asking) return;
 
-    const userMessage = { role: "user", content: trimmedQuestion };
+    const userMessage = {
+      role: "user",
+      content: trimmedQuestion,
+    };
+
     const updatedHistory = [...messages, userMessage];
 
     setMessages(updatedHistory);
@@ -47,12 +52,23 @@ export function useProductDeck() {
 
     try {
       const reply = await productService.askQuestion(products, updatedHistory);
-      setMessages([...updatedHistory, { role: "assistant", content: reply }]);
-    } catch (err) {
-      const errorMessage = err.message || "Failed to fetch response.";
+
       setMessages([
         ...updatedHistory,
-        { role: "assistant", content: `**Error:** ${errorMessage}` },
+        {
+          role: "assistant",
+          content: reply,
+        },
+      ]);
+    } catch (err) {
+      const errorMessage = err.message || "Failed to fetch response.";
+
+      setMessages([
+        ...updatedHistory,
+        {
+          role: "assistant",
+          content: `**Error:** ${errorMessage}`,
+        },
       ]);
     } finally {
       setAsking(false);

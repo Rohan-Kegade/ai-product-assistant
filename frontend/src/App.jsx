@@ -89,7 +89,7 @@ export default function App() {
                 messages={messages}
                 asking={asking}
                 productsCount={products.length}
-                onSelectPrompt={(promptText) => setQuestion(promptText)}
+                onSelectPrompt={handleAskQuestion}
                 containerRef={chatContainerRef}
               />
             </div>
