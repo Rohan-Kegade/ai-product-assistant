@@ -34,13 +34,13 @@ export function DeckStrip({
   const showForm = adding || (!loading && products.length === 0);
 
   return (
-    <div className="shrink-0 border-b border-slate-200/70 bg-white/60 px-5 md:px-8 py-2.5">
+    <div className="shrink-0 border-b border-slate-200/70 bg-white/60 px-4 md:px-8 py-2.5">
       <div className="flex items-start gap-3">
-        <span className="shrink-0 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <span className="hidden sm:block shrink-0 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
           Products
         </span>
 
-        <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2 max-h-24 overflow-y-auto [scrollbar-width:none]">
+        <div className="min-w-0 flex-1 flex flex-nowrap items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-x-visible sm:max-h-24 sm:overflow-y-auto [scrollbar-width:none]">
           {loading ? (
             <span
               aria-busy="true"
@@ -56,7 +56,7 @@ export function DeckStrip({
                 <span
                   key={product.id}
                   title={productTooltip(product, cached)}
-                  className={`group inline-flex items-center max-w-[280px] rounded-full border border-slate-200 bg-white pl-3 pr-1 py-0.5 text-xs font-medium text-slate-700 transition ${
+                  className={`group inline-flex shrink-0 items-center max-w-[240px] sm:max-w-[280px] rounded-full border border-slate-200 bg-white pl-3 pr-1 py-0.5 text-xs font-medium text-slate-700 transition ${
                     removing ? "opacity-50" : ""
                   }`}
                 >
@@ -83,7 +83,7 @@ export function DeckStrip({
                     onClick={() => onRemoveProduct(product.id)}
                     disabled={removing || loading}
                     aria-label={`Remove ${title}`}
-                    className="ml-1 w-5 h-5 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition disabled:cursor-not-allowed"
+                    className="ml-1 w-6 h-6 sm:w-5 sm:h-5 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition disabled:cursor-not-allowed"
                   >
                     {removing ? (
                       <LoadingSpinner size="sm" color="light" />
@@ -111,7 +111,7 @@ export function DeckStrip({
           {!loading && !showForm && (
             <button
               onClick={() => setAdding(true)}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs font-semibold text-slate-500 hover:border-blue-400 hover:text-blue-600 transition"
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs font-semibold text-slate-500 hover:border-blue-400 hover:text-blue-600 transition"
             >
               <svg
                 className="w-3 h-3"
@@ -145,12 +145,12 @@ export function DeckStrip({
             }}
             placeholder="Paste an Amazon product URL..."
             aria-label="Product URL"
-            className="min-w-0 flex-1 h-9 px-3 rounded-lg bg-white border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-60"
+            className="min-w-0 flex-1 h-10 sm:h-9 px-3 rounded-lg bg-white border border-slate-200 text-base sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 disabled:opacity-60"
           />
           <button
             onClick={onAddProduct}
             disabled={!url.trim() || busy}
-            className="h-9 px-4 rounded-lg bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="h-10 sm:h-9 px-4 rounded-lg bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {loadingProduct ? (
               <>
@@ -164,7 +164,7 @@ export function DeckStrip({
           {products.length > 0 && (
             <button
               onClick={() => setAdding(false)}
-              className="h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-700 transition"
+              className="h-10 sm:h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-700 transition"
             >
               Close
             </button>

@@ -3,7 +3,7 @@ import { ChatWindow } from "./components/chat/ChatWindow";
 import { ChatInput } from "./components/chat/ChatInput";
 import { DeckStrip } from "./components/deck/DeckStrip";
 import { useProductDeck } from "./hooks/useProductDeck";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 export default function App() {
   const {
@@ -34,6 +34,9 @@ export default function App() {
   } = useProductDeck();
 
   const chatContainerRef = useRef(null);
+  // Off-canvas sidebar on screens narrower than `lg`.
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const closeSidebar = () => setSidebarOpen(false);
 
   // The conversation's name comes from the list (first product's title); the
   // list refreshes after every add/remove/chat, so it catches up shortly after
@@ -44,24 +47,36 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-dvh overflow-hidden">
         {/* Sidebar */}
         <Sidebar
+          open={sidebarOpen}
+          onClose={closeSidebar}
           conversations={conversations}
           activeConversationId={conversationId}
-          onSelectConversation={switchConversation}
-          onNewConversation={startNewConversation}
+          onSelectConversation={(id) => {
+            switchConversation(id);
+            closeSidebar();
+          }}
+          onNewConversation={() => {
+            startNewConversation();
+            closeSidebar();
+          }}
           onRenameConversation={renameConversation}
           onDeleteConversation={removeConversation}
         />
 
         {/* Main Workspace */}
         <main className="flex-1 min-w-0 flex flex-col bg-[#f8fafc]">
-          <header className="h-14 shrink-0 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl flex items-center justify-between px-5 md:px-8">
-            <div className="flex items-center gap-3">
-              <div className="lg:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+          <header className="h-14 [@media(max-height:500px)]:h-11 shrink-0 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl flex items-center justify-between px-4 md:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open conversations"
+                className="lg:hidden w-10 h-10 -ml-2 shrink-0 rounded-xl flex items-center justify-center text-slate-700 hover:bg-slate-100 transition"
+              >
                 <svg
-                  className="w-4 h-4 text-white"
+                  className="w-5 h-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -70,10 +85,10 @@ export default function App() {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M12 3v18m9-9H3"
+                    d="M4 6h16M4 12h16M4 18h16"
                   />
                 </svg>
-              </div>
+              </button>
               <div>
                 <h1
                   title={activeTitle}

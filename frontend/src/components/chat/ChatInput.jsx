@@ -11,7 +11,7 @@ export function ChatInput({
   const isDisabled = productsCount === 0 || asking || loading;
 
   return (
-    <div className="pt-3 border-t border-slate-200/60 shrink-0">
+    <div className="pt-3 pb-[env(safe-area-inset-bottom)] border-t border-slate-200/60 shrink-0">
       <div
         className={`relative flex items-center rounded-2xl border transition shadow-sm ${
           productsCount === 0
@@ -33,10 +33,10 @@ export function ChatInput({
             loading
               ? "Loading conversation..."
               : productsCount === 0
-                ? "Add a product to start asking questions..."
+                ? "Add a product to start..."
                 : "Ask about your products..."
           }
-          className="flex-1 h-14 bg-transparent px-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none disabled:cursor-not-allowed"
+          className="min-w-0 flex-1 h-12 sm:h-14 bg-transparent px-4 text-base sm:text-sm text-slate-800 placeholder:text-slate-400 outline-none disabled:cursor-not-allowed"
         />
 
         <button
@@ -64,7 +64,7 @@ export function ChatInput({
         </button>
       </div>
 
-      <div className="flex items-center justify-end mt-2 px-1">
+      <div className="hidden sm:flex [@media(max-height:500px)]:hidden items-center justify-end mt-2 px-1">
         <span className="text-[10px] text-slate-400">Press Enter to send</span>
       </div>
     </div>

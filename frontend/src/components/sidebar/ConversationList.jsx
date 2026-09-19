@@ -85,7 +85,7 @@ export function ConversationList({
         </h2>
         <button
           onClick={onNew}
-          className="text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition"
+          className="px-2 py-1 -mr-2 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition"
         >
           + New
         </button>
@@ -108,7 +108,7 @@ export function ConversationList({
             return (
               <li
                 key={conversation.id}
-                className={`group flex items-center gap-2 rounded-lg px-3 py-2 transition ${
+                className={`group flex items-center gap-2 rounded-lg px-3 py-2.5 lg:py-2 transition ${
                   isActive
                     ? "bg-white/[0.09] border border-white/[0.1]"
                     : "border border-transparent hover:bg-white/[0.05]"
@@ -126,7 +126,7 @@ export function ConversationList({
                     }}
                     onBlur={() => setRenamingId(null)}
                     aria-label="Conversation name"
-                    className="min-w-0 flex-1 h-7 px-2 rounded-md bg-white/[0.07] border border-blue-500/50 text-xs text-white outline-none"
+                    className="min-w-0 flex-1 h-10 lg:h-7 px-2 rounded-md bg-white/[0.07] border border-blue-500/50 text-base lg:text-xs text-white outline-none"
                   />
                 ) : (
                   <button
@@ -178,7 +178,7 @@ export function ConversationList({
                         aria-label="Conversation options"
                         aria-haspopup="menu"
                         aria-expanded={menu?.id === conversation.id}
-                        className="w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-white/[0.08] transition"
+                        className="w-9 h-9 lg:w-7 lg:h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-200 hover:bg-white/[0.08] transition"
                       >
                         <svg
                           className="w-4 h-4"
@@ -212,7 +212,7 @@ export function ConversationList({
               const target = conversations.find((c) => c.id === menu.id);
               if (target) startRename(target);
             }}
-            className="w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-white/[0.07] transition"
+            className="w-full px-3 py-2.5 text-left text-sm lg:text-xs text-slate-200 hover:bg-white/[0.07] transition"
           >
             Rename
           </button>
@@ -222,7 +222,7 @@ export function ConversationList({
               setConfirmingId(menu.id);
               setMenu(null);
             }}
-            className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-white/[0.07] transition"
+            className="w-full px-3 py-2.5 text-left text-sm lg:text-xs text-red-400 hover:bg-white/[0.07] transition"
           >
             Delete
           </button>
