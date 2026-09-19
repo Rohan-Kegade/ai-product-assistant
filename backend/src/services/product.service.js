@@ -1,4 +1,11 @@
 import * as scraperService from "../services/scraper.service.js";
+import { AppDataSource } from "../db/data-source.js";
+import { Product } from "../db/entities/Product.js";
+import { ConversationProduct } from "../db/entities/ConversationProduct.js";
+
+const productRepository = () => AppDataSource.getRepository(Product);
+const conversationProductRepository = () =>
+  AppDataSource.getRepository(ConversationProduct);
 
 export const scrapeProductData = async (url) => {
   console.log(`Scraping product from URL: ${url}`);
@@ -11,3 +18,67 @@ export const scrapeProductData = async (url) => {
 
   return product;
 };
+
+export async function findProductByAsin(asin) {
+  if (!asin) return null;
+
+  return productRepository().findOneBy({ asin });
+}
+
+// Persists a freshly scraped product. `scraped` is the raw shape returned by
+// scrapeProductData/scraper.service.js.
+export async function saveProduct({ asin, url, scraped }) {
+  const product = productRepository().create({
+    asin,
+    url,
+    title: scraped.title,
+    price: scraped.price,
+    rating: scraped.rating,
+    reviewCount: scraped.reviewCount,
+    boughtLastMonth: scraped.boughtLastMonth,
+    color: scraped.color,
+    size: scraped.size,
+    about: scraped.about,
+    reviewSummary: scraped.reviewSummary,
+    offers: scraped.offers,
+    productDetails: scraped.productDetails,
+    techDetails: scraped.techDetails,
+    scrapedAt: new Date(),
+  });
+
+  return productRepository().save(product);
+}
+
+// Idempotent: linking the same product to the same conversation twice is a
+// no-op, backed by the (conversation_id, product_id) unique constraint.
+export async function linkProductToConversation(conversationId, productId) {
+  const existingLink = await conversationProductRepository().findOneBy({
+    conversationId,
+    productId,
+  });
+
+  if (existingLink) {
+    return existingLink;
+  }
+
+  const link = conversationProductRepository().create({
+    conversationId,
+    productId,
+  });
+
+  return conversationProductRepository().save(link);
+}
+
+export async function unlinkProductFromConversation(conversationId, productId) {
+  await conversationProductRepository().delete({ conversationId, productId });
+}
+
+export async function listProductsForConversation(conversationId) {
+  const links = await conversationProductRepository().find({
+    where: { conversationId },
+    relations: { product: true },
+    order: { addedAt: "ASC" },
+  });
+
+  return links.map((link) => link.product);
+}
