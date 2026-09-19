@@ -87,12 +87,14 @@ export const productService = {
    * Sends a new user message to a conversation and streams the reply,
    * invoking onChunk(text) for each incremental piece of text as it
    * arrives from the server. Products and history are loaded server-side.
+   * Pass { retry: true } to re-run a question whose previous attempt failed,
+   * so the server doesn't store the user message a second time.
    */
-  async askQuestion(conversationId, message, onChunk) {
+  async askQuestion(conversationId, message, onChunk, { retry = false } = {}) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ conversationId, message }),
+      body: JSON.stringify({ conversationId, message, retry }),
     });
 
     if (!response.ok) {

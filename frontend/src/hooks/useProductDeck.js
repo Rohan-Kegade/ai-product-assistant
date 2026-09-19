@@ -46,6 +46,13 @@ function initialConversationId() {
 export function useProductDeck() {
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [conversations, setConversations] = useState([]);
+  const [loadingConversation, setLoadingConversation] = useState(() =>
+    Boolean(initialConversationId()),
+  );
+  const [removingProductIds, setRemovingProductIds] = useState([]);
+  // Products whose last add was served from the server-side cache. Add-time
+  // only: not stored, cleared when the conversation changes.
+  const [cachedProductIds, setCachedProductIds] = useState([]);
   const [url, setUrl] = useState("");
   const [products, setProducts] = useState([]);
   const [loadingProduct, setLoadingProduct] = useState(false);
@@ -76,8 +83,11 @@ export function useProductDeck() {
     writeHashConversationId(id);
     setProducts([]);
     setMessages([]);
+    setCachedProductIds([]);
+    setRemovingProductIds([]);
     setQuestion("");
     setAsking(false);
+    setLoadingConversation(false);
     setError(null);
   }, []);
 
@@ -100,6 +110,8 @@ export function useProductDeck() {
         } else {
           setError(err.message || "Failed to load conversation");
         }
+      } finally {
+        if (activeIdRef.current === id) setLoadingConversation(false);
       }
     },
     [activate],
@@ -108,6 +120,7 @@ export function useProductDeck() {
   const loadConversation = useCallback(
     (id) => {
       activate(id);
+      setLoadingConversation(true);
       return fetchConversation(id);
     },
     [activate, fetchConversation],
@@ -156,7 +169,7 @@ export function useProductDeck() {
 
   const handleAddProduct = async () => {
     const trimmedUrl = url.trim();
-    if (!trimmedUrl || loadingProduct) return;
+    if (!trimmedUrl || loadingProduct || loadingConversation) return;
 
     const startedIn = activeIdRef.current;
 
@@ -184,6 +197,10 @@ export function useProductDeck() {
           ? prev
           : [...prev, data.product],
       );
+      setCachedProductIds((prev) => {
+        const rest = prev.filter((id) => id !== data.product.id);
+        return data.cached ? [...rest, data.product.id] : rest;
+      });
       setUrl("");
     } catch (err) {
       if (activeIdRef.current === startedIn) {
@@ -195,8 +212,11 @@ export function useProductDeck() {
   };
 
   const handleRemoveProduct = async (id) => {
+    if (removingProductIds.includes(id)) return;
+
     const startedIn = activeIdRef.current;
     setError(null);
+    setRemovingProductIds((prev) => [...prev, id]);
 
     try {
       await productService.removeProduct(startedIn, id);
@@ -207,28 +227,38 @@ export function useProductDeck() {
       if (activeIdRef.current === startedIn) {
         setError(err.message || "Failed to remove product");
       }
+    } finally {
+      setRemovingProductIds((prev) => prev.filter((pid) => pid !== id));
     }
   };
 
-  const handleAskQuestion = async (questionText = question) => {
+  // `retry` re-runs the last question after a failed attempt: no new user
+  // bubble is added, and a trailing errored assistant bubble is dropped.
+  const sendQuestion = async (questionText, { retry = false } = {}) => {
     const trimmedQuestion = questionText.trim();
 
     if (
       !trimmedQuestion ||
       !conversationId ||
       products.length === 0 ||
-      asking
+      asking ||
+      loadingConversation
     )
       return;
 
-    const userMessage = {
-      role: "user",
-      content: trimmedQuestion,
-    };
-
     const askedIn = conversationId;
 
-    setMessages((prev) => [...prev, userMessage]);
+    if (retry) {
+      setMessages((prev) =>
+        prev[prev.length - 1]?.error ? prev.slice(0, -1) : prev,
+      );
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmedQuestion },
+      ]);
+    }
+
     setQuestion("");
     setAsking(true);
     setError(null);
@@ -267,9 +297,12 @@ export function useProductDeck() {
     };
 
     try {
-      await productService.askQuestion(conversationId, trimmedQuestion, (chunk) => {
-        appendToAssistant(chunk);
-      });
+      await productService.askQuestion(
+        conversationId,
+        trimmedQuestion,
+        (chunk) => appendToAssistant(chunk),
+        { retry },
+      );
     } catch (err) {
       if (activeIdRef.current !== askedIn) return;
 
@@ -286,6 +319,7 @@ export function useProductDeck() {
               id: assistantMessageId,
               role: "assistant",
               content: `**Error:** ${errorMessage}`,
+              error: true,
             },
           ];
         }
@@ -295,6 +329,7 @@ export function useProductDeck() {
         updated[existingIndex] = {
           ...existing,
           content: `${existing.content}\n\n**Error:** ${errorMessage}`,
+          error: true,
         };
         return updated;
       });
@@ -302,6 +337,24 @@ export function useProductDeck() {
       if (activeIdRef.current === askedIn) setAsking(false);
       refreshConversations();
     }
+  };
+
+  const handleAskQuestion = (questionText = question) =>
+    sendQuestion(questionText);
+
+  // A question is unanswered when the last message is the user's (e.g. after
+  // a refresh) or is an errored assistant reply.
+  const lastMessage = messages[messages.length - 1];
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+  const canRetry =
+    !asking &&
+    !loadingConversation &&
+    products.length > 0 &&
+    Boolean(lastUserMessage) &&
+    (lastMessage?.role === "user" || Boolean(lastMessage?.error));
+
+  const handleRetry = () => {
+    if (canRetry) sendQuestion(lastUserMessage.content, { retry: true });
   };
 
   return {
@@ -323,5 +376,10 @@ export function useProductDeck() {
     handleAddProduct,
     handleRemoveProduct,
     handleAskQuestion,
+    handleRetry,
+    canRetry,
+    loadingConversation,
+    removingProductIds,
+    cachedProductIds,
   };
 }

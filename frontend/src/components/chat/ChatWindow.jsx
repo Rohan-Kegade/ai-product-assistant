@@ -18,6 +18,9 @@ export function ChatWindow({
   productsCount,
   onSelectPrompt,
   containerRef,
+  loading,
+  canRetry,
+  onRetry,
 }) {
   // Smoothly scroll the container to the maximum height on content change
   useEffect(() => {
@@ -28,6 +31,24 @@ export function ChatWindow({
       });
     }
   }, [messages, asking, containerRef]);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 py-4" aria-busy="true" aria-label="Loading conversation">
+        {[
+          { align: "justify-end", width: "w-1/3" },
+          { align: "justify-start", width: "w-2/3" },
+          { align: "justify-end", width: "w-1/4" },
+        ].map(({ align, width }, index) => (
+          <div key={index} className={`flex ${align}`}>
+            <div
+              className={`${width} h-16 rounded-2xl bg-slate-200/70 animate-pulse`}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (messages.length === 0) {
     return (
@@ -79,8 +100,32 @@ export function ChatWindow({
   return (
     <div className="space-y-6 py-4">
       {messages.map((message, index) => (
-        <ChatBubble key={index} message={message} />
+        <ChatBubble key={message.id ?? index} message={message} />
       ))}
+
+      {canRetry && (
+        <div className="flex justify-start pl-11">
+          <button
+            onClick={onRetry}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:border-blue-300 hover:text-blue-600 text-xs font-medium text-slate-700 transition shadow-xs"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 4v5h5M20 20v-5h-5M5.6 15A8 8 0 0019 13M18.4 9A8 8 0 005 11"
+              />
+            </svg>
+            Retry
+          </button>
+        </div>
+      )}
 
       {asking && messages[messages.length - 1]?.role !== "assistant" && (
         <div className="flex items-start">

@@ -1,6 +1,12 @@
 import { ProductCard } from "./ProductCard";
 
-export function ProductList({ products, onRemoveProduct }) {
+export function ProductList({
+  products,
+  loading,
+  removingProductIds = [],
+  cachedProductIds = [],
+  onRemoveProduct,
+}) {
   return (
     <div className="flex-1 min-h-0 px-6 pt-5">
       <div className="flex items-center justify-between mb-3">
@@ -15,7 +21,16 @@ export function ProductList({ products, onRemoveProduct }) {
       </div>
 
       <div className="space-y-2 overflow-y-auto max-h-[calc(100%-55px)] pr-1">
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="space-y-2" aria-busy="true">
+            {[0, 1].map((n) => (
+              <div
+                key={n}
+                className="h-[62px] rounded-xl bg-white/[0.05] animate-pulse"
+              />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/[0.08] p-5 text-center">
             <div className="w-10 h-10 mx-auto rounded-xl bg-white/[0.04] flex items-center justify-center mb-3">
               <svg
@@ -42,6 +57,8 @@ export function ProductList({ products, onRemoveProduct }) {
               key={product.id}
               product={product}
               index={index}
+              removing={removingProductIds.includes(product.id)}
+              cached={cachedProductIds.includes(product.id)}
               onRemove={onRemoveProduct}
             />
           ))

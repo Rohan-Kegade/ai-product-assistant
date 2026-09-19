@@ -6,8 +6,9 @@ export function ChatInput({
   onAskQuestion,
   productsCount,
   asking,
+  loading,
 }) {
-  const isDisabled = productsCount === 0 || asking;
+  const isDisabled = productsCount === 0 || asking || loading;
 
   return (
     <div className="pt-3 border-t border-slate-200/60 shrink-0">
@@ -29,9 +30,11 @@ export function ChatInput({
             }
           }}
           placeholder={
-            productsCount === 0
-              ? "Add a product to start asking questions..."
-              : "Ask about your products..."
+            loading
+              ? "Loading conversation..."
+              : productsCount === 0
+                ? "Add a product to start asking questions..."
+                : "Ask about your products..."
           }
           className="flex-1 h-14 bg-transparent px-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none disabled:cursor-not-allowed"
         />

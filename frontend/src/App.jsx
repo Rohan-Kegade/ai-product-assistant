@@ -24,6 +24,11 @@ export default function App() {
     handleAddProduct,
     handleRemoveProduct,
     handleAskQuestion,
+    handleRetry,
+    canRetry,
+    loadingConversation,
+    removingProductIds,
+    cachedProductIds,
   } = useProductDeck();
 
   const chatContainerRef = useRef(null);
@@ -42,6 +47,9 @@ export default function App() {
           setUrl={setUrl}
           products={products}
           loadingProduct={loadingProduct}
+          loadingConversation={loadingConversation}
+          removingProductIds={removingProductIds}
+          cachedProductIds={cachedProductIds}
           onAddProduct={handleAddProduct}
           onRemoveProduct={handleRemoveProduct}
         />
@@ -101,6 +109,9 @@ export default function App() {
                 productsCount={products.length}
                 onSelectPrompt={handleAskQuestion}
                 containerRef={chatContainerRef}
+                loading={loadingConversation}
+                canRetry={canRetry}
+                onRetry={handleRetry}
               />
             </div>
 
@@ -110,6 +121,7 @@ export default function App() {
               onAskQuestion={handleAskQuestion}
               productsCount={products.length}
               asking={asking}
+              loading={loadingConversation}
             />
           </div>
         </main>

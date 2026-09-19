@@ -12,9 +12,13 @@ export function Sidebar({
   setUrl,
   products,
   loadingProduct,
+  loadingConversation,
+  removingProductIds,
+  cachedProductIds,
   onAddProduct,
   onRemoveProduct,
 }) {
+  const addDisabled = loadingProduct || loadingConversation;
   return (
     <aside className="hidden lg:flex w-[350px] bg-[#0b0f19] text-white flex-col relative overflow-hidden shrink-0">
       <div className="absolute -top-32 -left-32 w-72 h-72 bg-blue-600/20 blur-[100px] rounded-full" />
@@ -79,7 +83,7 @@ export function Sidebar({
               </svg>
               <input
                 value={url}
-                disabled={loadingProduct}
+                disabled={addDisabled}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && onAddProduct()}
                 placeholder="Paste Product URL..."
@@ -89,7 +93,7 @@ export function Sidebar({
 
             <button
               onClick={onAddProduct}
-              disabled={!url.trim() || loadingProduct}
+              disabled={!url.trim() || addDisabled}
               className="w-full h-11 rounded-xl bg-white text-slate-900 hover:bg-slate-100 active:bg-slate-200 font-semibold text-sm transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loadingProduct ? (
@@ -104,7 +108,13 @@ export function Sidebar({
           </div>
         </div>
 
-        <ProductList products={products} onRemoveProduct={onRemoveProduct} />
+        <ProductList
+          products={products}
+          loading={loadingConversation}
+          removingProductIds={removingProductIds}
+          cachedProductIds={cachedProductIds}
+          onRemoveProduct={onRemoveProduct}
+        />
       </div>
     </aside>
   );
