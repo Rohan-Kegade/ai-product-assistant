@@ -82,3 +82,14 @@ export async function listProductsForConversation(conversationId) {
 
   return links.map((link) => link.product);
 }
+
+// Only the fields the frontend actually renders (sidebar product card) -
+// everything else (offers, productDetails, techDetails, etc.) now lives in
+// the DB and is pulled server-side when building the LLM prompt.
+export function toPublicProduct(product) {
+  return {
+    id: product.id,
+    title: product.title,
+    price: product.price,
+  };
+}

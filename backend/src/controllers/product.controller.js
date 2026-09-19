@@ -2,17 +2,6 @@ import * as productService from "../services/product.service.js";
 import * as conversationService from "../services/conversation.service.js";
 import { validateAmazonProductUrl } from "../utils/amazonUrl.js";
 
-// Only the fields the frontend actually renders (sidebar product card) -
-// everything else (offers, productDetails, techDetails, etc.) now lives in
-// the DB and is pulled server-side when building the LLM prompt.
-function toPublicProduct(product) {
-  return {
-    id: product.id,
-    title: product.title,
-    price: product.price,
-  };
-}
-
 export const addProduct = async (req, res, next) => {
   try {
     const { url, conversationId } = req.body;
@@ -58,7 +47,7 @@ export const addProduct = async (req, res, next) => {
 
     return res.status(200).json({
       conversationId: conversation.id,
-      product: toPublicProduct(product),
+      product: productService.toPublicProduct(product),
     });
   } catch (error) {
     console.error("Product scraping failed:", error);
