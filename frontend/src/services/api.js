@@ -26,36 +26,57 @@ async function request(endpoint, options = {}) {
     );
   }
 
+  if (response.status === 204) return null;
+
   return response.json();
 }
 
 export const productService = {
   /**
-   * Scrapes and retrieves product metadata by URL.
+   * Scrapes (or reuses) a product and links it to a conversation. Omit
+   * conversationId to start a new conversation. Resolves to
+   * { conversationId, product }.
    */
-  async addProductByUrl(url) {
+  async addProductByUrl(url, conversationId) {
     const data = await request("/products", {
       method: "POST",
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, conversationId }),
     });
 
-    if (!data.product) {
+    if (!data.product || !data.conversationId) {
       throw new ApiError("Invalid response format from server.", 500);
     }
 
-    return data.product;
+    return data;
   },
 
   /**
-   * Sends conversational history and product context for AI analysis and
-   * streams the reply, invoking onChunk(text) for each incremental piece
-   * of text as it arrives from the server.
+   * Unlinks a product from a conversation.
    */
-  async askQuestion(products, history, onChunk) {
+  async removeProduct(conversationId, productId) {
+    await request(`/conversations/${conversationId}/products/${productId}`, {
+      method: "DELETE",
+    });
+  },
+
+  /**
+   * Loads a conversation's products and messages (used to restore state
+   * after a page refresh).
+   */
+  async getConversation(conversationId) {
+    return request(`/conversations/${conversationId}`);
+  },
+
+  /**
+   * Sends a new user message to a conversation and streams the reply,
+   * invoking onChunk(text) for each incremental piece of text as it
+   * arrives from the server. Products and history are loaded server-side.
+   */
+  async askQuestion(conversationId, message, onChunk) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products, history }),
+      body: JSON.stringify({ conversationId, message }),
     });
 
     if (!response.ok) {

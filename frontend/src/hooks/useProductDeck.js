@@ -1,7 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { productService } from "../services/api";
 
+const CONVERSATION_KEY = "conversationId";
+
+function readStoredConversationId() {
+  try {
+    return localStorage.getItem(CONVERSATION_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function storeConversationId(id) {
+  try {
+    if (id) localStorage.setItem(CONVERSATION_KEY, id);
+    else localStorage.removeItem(CONVERSATION_KEY);
+  } catch {
+    // storage unavailable - the conversation just won't survive a refresh
+  }
+}
+
 export function useProductDeck() {
+  const [conversationId, setConversationId] = useState(readStoredConversationId);
   const [url, setUrl] = useState("");
   const [products, setProducts] = useState([]);
   const [loadingProduct, setLoadingProduct] = useState(false);
@@ -11,6 +31,36 @@ export function useProductDeck() {
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
 
+  // Restore products + messages for a conversation saved before a refresh.
+  useEffect(() => {
+    const storedId = readStoredConversationId();
+    if (!storedId) return;
+
+    let cancelled = false;
+
+    productService
+      .getConversation(storedId)
+      .then((data) => {
+        if (cancelled) return;
+        setProducts(data.products);
+        setMessages(data.messages);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err.status === 404) {
+          // Conversation no longer exists server-side - start fresh.
+          storeConversationId(null);
+          setConversationId(null);
+        } else {
+          setError(err.message || "Failed to restore conversation");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleAddProduct = async () => {
     const trimmedUrl = url.trim();
     if (!trimmedUrl || loadingProduct) return;
@@ -19,8 +69,21 @@ export function useProductDeck() {
     setError(null);
 
     try {
-      const productData = await productService.addProductByUrl(trimmedUrl);
-      setProducts((prev) => [...prev, { id: Date.now(), ...productData }]);
+      const data = await productService.addProductByUrl(
+        trimmedUrl,
+        conversationId,
+      );
+
+      if (data.conversationId !== conversationId) {
+        setConversationId(data.conversationId);
+        storeConversationId(data.conversationId);
+      }
+
+      setProducts((prev) =>
+        prev.some((p) => p.id === data.product.id)
+          ? prev
+          : [...prev, data.product],
+      );
       setUrl("");
     } catch (err) {
       setError(err.message || "Failed to add product");
@@ -29,23 +92,34 @@ export function useProductDeck() {
     }
   };
 
-  const handleRemoveProduct = (id) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+  const handleRemoveProduct = async (id) => {
+    setError(null);
+
+    try {
+      await productService.removeProduct(conversationId, id);
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      setError(err.message || "Failed to remove product");
+    }
   };
 
   const handleAskQuestion = async (questionText = question) => {
     const trimmedQuestion = questionText.trim();
 
-    if (!trimmedQuestion || products.length === 0 || asking) return;
+    if (
+      !trimmedQuestion ||
+      !conversationId ||
+      products.length === 0 ||
+      asking
+    )
+      return;
 
     const userMessage = {
       role: "user",
       content: trimmedQuestion,
     };
 
-    const updatedHistory = [...messages, userMessage];
-
-    setMessages(updatedHistory);
+    setMessages((prev) => [...prev, userMessage]);
     setQuestion("");
     setAsking(true);
     setError(null);
@@ -80,7 +154,7 @@ export function useProductDeck() {
     };
 
     try {
-      await productService.askQuestion(products, updatedHistory, (chunk) => {
+      await productService.askQuestion(conversationId, trimmedQuestion, (chunk) => {
         appendToAssistant(chunk);
       });
     } catch (err) {
