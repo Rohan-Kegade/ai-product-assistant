@@ -1,4 +1,5 @@
 import * as productService from "../services/product.service.js";
+import { validateAmazonProductUrl } from "../utils/amazonUrl.js";
 
 export const addProduct = async (req, res, next) => {
   try {
@@ -10,7 +11,15 @@ export const addProduct = async (req, res, next) => {
       });
     }
 
-    const product = await productService.scrapeProductData(url);
+    const validation = await validateAmazonProductUrl(url);
+
+    if (!validation.valid) {
+      return res.status(400).json({
+        message: `Invalid Amazon product URL: ${validation.reason}`,
+      });
+    }
+
+    const product = await productService.scrapeProductData(validation.url);
 
     return res.status(200).json({
       product,
