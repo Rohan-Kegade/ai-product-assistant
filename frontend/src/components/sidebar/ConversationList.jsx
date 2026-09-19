@@ -78,7 +78,7 @@ export function ConversationList({
   };
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col px-6 pt-5">
+    <div className="flex-1 min-h-0 flex flex-col px-5 pt-5">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xs font-semibold text-slate-100 uppercase tracking-wider">
           Conversations
