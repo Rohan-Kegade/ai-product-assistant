@@ -50,26 +50,65 @@ export function useProductDeck() {
     setAsking(true);
     setError(null);
 
-    try {
-      const reply = await productService.askQuestion(products, updatedHistory);
+    // Stable id for the assistant message being streamed in, so the update
+    // is derived purely from `prev` - React 18 StrictMode invokes setState
+    // updaters twice in dev, so mutating an outer variable here (instead of
+    // reading it back from `prev`) would misattribute the second chunk.
+    const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-      setMessages([
-        ...updatedHistory,
-        {
-          role: "assistant",
-          content: reply,
-        },
-      ]);
+    const appendToAssistant = (text) => {
+      setMessages((prev) => {
+        const existingIndex = prev.findIndex(
+          (msg) => msg.id === assistantMessageId,
+        );
+
+        if (existingIndex === -1) {
+          return [
+            ...prev,
+            { id: assistantMessageId, role: "assistant", content: text },
+          ];
+        }
+
+        const updated = [...prev];
+        const existing = updated[existingIndex];
+        updated[existingIndex] = {
+          ...existing,
+          content: existing.content + text,
+        };
+        return updated;
+      });
+    };
+
+    try {
+      await productService.askQuestion(products, updatedHistory, (chunk) => {
+        appendToAssistant(chunk);
+      });
     } catch (err) {
       const errorMessage = err.message || "Failed to fetch response.";
+      setMessages((prev) => {
+        const existingIndex = prev.findIndex(
+          (msg) => msg.id === assistantMessageId,
+        );
 
-      setMessages([
-        ...updatedHistory,
-        {
-          role: "assistant",
-          content: `**Error:** ${errorMessage}`,
-        },
-      ]);
+        if (existingIndex === -1) {
+          return [
+            ...prev,
+            {
+              id: assistantMessageId,
+              role: "assistant",
+              content: `**Error:** ${errorMessage}`,
+            },
+          ];
+        }
+
+        const updated = [...prev];
+        const existing = updated[existingIndex];
+        updated[existingIndex] = {
+          ...existing,
+          content: `${existing.content}\n\n**Error:** ${errorMessage}`,
+        };
+        return updated;
+      });
     } finally {
       setAsking(false);
     }

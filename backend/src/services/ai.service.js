@@ -5,7 +5,7 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
 });
 
-export async function askMultiProductFollowUp(productsList, history) {
+export async function* streamMultiProductFollowUp(productsList, history) {
   // 1. Convert React role names ("assistant") to Gemini role names ("model")
   // 2. Omit the last message from history array so it can be passed to sendMessage
   const formattedHistory = history.slice(0, -1).map((msg) => ({
@@ -45,10 +45,15 @@ export async function askMultiProductFollowUp(productsList, history) {
   // Extract the latest user question
   const lastUserMessage = history[history.length - 1].content;
 
-  // Send the latest user prompt to the active session
-  const response = await chat.sendMessage({
+  // Stream the latest user prompt to the active session, yielding each
+  // incremental text delta as it arrives from the model
+  const stream = await chat.sendMessageStream({
     message: lastUserMessage,
   });
 
-  return response.text;
+  for await (const chunk of stream) {
+    if (chunk.text) {
+      yield chunk.text;
+    }
+  }
 }

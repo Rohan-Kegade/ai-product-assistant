@@ -82,7 +82,7 @@ export function ChatWindow({
         <ChatBubble key={index} message={message} />
       ))}
 
-      {asking && (
+      {asking && messages[messages.length - 1]?.role !== "assistant" && (
         <div className="flex items-start">
           <div className="w-8 h-8 rounded-lg bg-white border border-slate-300 flex items-center justify-center mr-3 shrink-0">
             <svg

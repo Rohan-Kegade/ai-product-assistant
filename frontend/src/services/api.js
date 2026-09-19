@@ -47,14 +47,64 @@ export const productService = {
   },
 
   /**
-   * Sends conversational history and product context for AI analysis.
+   * Sends conversational history and product context for AI analysis and
+   * streams the reply, invoking onChunk(text) for each incremental piece
+   * of text as it arrives from the server.
    */
-  async askQuestion(products, history) {
-    const data = await request("/chat", {
+  async askQuestion(products, history, onChunk) {
+    const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products, history }),
     });
 
-    return data.reply;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.message || `Request failed with status ${response.status}`,
+        response.status
+      );
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      let boundary;
+      while ((boundary = buffer.indexOf("\n\n")) !== -1) {
+        const rawEvent = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 2);
+
+        let eventType = "message";
+        let dataLine = "";
+
+        for (const line of rawEvent.split("\n")) {
+          if (line.startsWith("event:")) eventType = line.slice(6).trim();
+          if (line.startsWith("data:")) dataLine = line.slice(5).trim();
+        }
+
+        if (!dataLine) continue;
+
+        const payload = JSON.parse(dataLine);
+
+        if (eventType === "error") {
+          throw new ApiError(payload.message || "Streaming error", 500);
+        }
+
+        if (eventType === "done") {
+          return;
+        }
+
+        if (payload.text) {
+          onChunk(payload.text);
+        }
+      }
+    }
   },
 };
