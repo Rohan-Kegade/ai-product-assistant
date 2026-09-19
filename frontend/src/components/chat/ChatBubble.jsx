@@ -1,28 +1,13 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { LogoMark } from "../common/Logo";
 
 export function ChatBubble({ message }) {
   const isUser = message.role === "user";
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      {!isUser && (
-        <div className="hidden sm:flex w-8 h-8 rounded-lg bg-white border border-slate-300 items-center justify-center mr-3 shrink-0 mt-1 shadow-md shadow-blue-500/10">
-          <svg
-            className="w-9 h-9 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.5"
-              d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
-            />
-          </svg>
-        </div>
-      )}
+      {!isUser && <LogoMark size={32} className="hidden sm:block mr-3 mt-1" />}
 
       <div
         className={`min-w-0 max-w-[94%] sm:max-w-[82%] [overflow-wrap:anywhere] ${

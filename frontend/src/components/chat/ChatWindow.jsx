@@ -1,4 +1,5 @@
 import { ChatBubble } from "./ChatBubble";
+import { LogoMark } from "../common/Logo";
 import { useEffect } from "react";
 
 const SINGLE_PRODUCT_PROMPTS = [
@@ -73,21 +74,7 @@ export function ChatWindow({
       <div className="h-full flex flex-col items-center justify-center px-6">
         <div className="relative mb-7">
           <div className="absolute inset-0 bg-blue-500/10 blur-2xl rounded-full" />
-          <div className="relative w-20 h-20 rounded-[24px] bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center">
-            <svg
-              className="w-9 h-9 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
-              />
-            </svg>
-          </div>
+          <LogoMark size={80} className="relative drop-shadow-lg" />
         </div>
 
         <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 text-center">
@@ -147,21 +134,7 @@ export function ChatWindow({
 
       {asking && messages[messages.length - 1]?.role !== "assistant" && (
         <div className="flex items-start">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-300 flex items-center justify-center mr-3 shrink-0">
-            <svg
-              className="w-9 h-9 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
-              />
-            </svg>
-          </div>
+          <LogoMark size={32} className="mr-3" />
 
           <div className="px-4 py-3.5 rounded-2xl rounded-bl-md bg-white border border-slate-200/80 shadow-xs">
             <div className="flex items-center gap-1.5">

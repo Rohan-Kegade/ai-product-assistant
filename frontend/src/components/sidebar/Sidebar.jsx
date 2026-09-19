@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { ConversationList } from "./ConversationList";
+import { Logo } from "../common/Logo";
 
 export function Sidebar({
   open,
@@ -44,24 +45,7 @@ export function Sidebar({
         <div className="relative z-10 flex flex-col h-full">
           <div className="px-6 pt-6 pb-5">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <svg
-                  className="w-9 h-9 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.5"
-                    d="M8 10h8M8 14h5m7-2a8 8 0 11-16 0 8 8 0 0116 0z"
-                  />
-                </svg>
-              </div>
-              <h1 className="text-[17px] font-bold tracking-tight">
-                ProductIQ
-              </h1>
+              <Logo />
               <button
                 onClick={onClose}
                 aria-label="Close conversations"
