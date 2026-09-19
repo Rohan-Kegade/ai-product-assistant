@@ -6,6 +6,11 @@ import { useRef } from "react";
 
 export default function App() {
   const {
+    conversationId,
+    conversations,
+    switchConversation,
+    startNewConversation,
+    removeConversation,
     url,
     setUrl,
     products,
@@ -28,6 +33,11 @@ export default function App() {
       <div className="flex h-screen overflow-hidden">
         {/* Sidebar */}
         <Sidebar
+          conversations={conversations}
+          activeConversationId={conversationId}
+          onSelectConversation={switchConversation}
+          onNewConversation={startNewConversation}
+          onDeleteConversation={removeConversation}
           url={url}
           setUrl={setUrl}
           products={products}

@@ -1,7 +1,13 @@
 import { ProductList } from "./ProductList";
+import { ConversationList } from "./ConversationList";
 import { LoadingSpinner } from "../common/LoadingSpinner";
 
 export function Sidebar({
+  conversations,
+  activeConversationId,
+  onSelectConversation,
+  onNewConversation,
+  onDeleteConversation,
   url,
   setUrl,
   products,
@@ -37,6 +43,14 @@ export function Sidebar({
         </div>
 
         <div className="mx-6 border-t border-white/[0.06]" />
+
+        <ConversationList
+          conversations={conversations}
+          activeId={activeConversationId}
+          onSelect={onSelectConversation}
+          onNew={onNewConversation}
+          onDelete={onDeleteConversation}
+        />
 
         <div className="px-6 pt-6">
           <div className="mb-3">

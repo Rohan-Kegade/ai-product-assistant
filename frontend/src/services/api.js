@@ -60,6 +60,22 @@ export const productService = {
   },
 
   /**
+   * Lists past conversations, newest activity first.
+   */
+  async listConversations() {
+    const data = await request("/conversations");
+    return data.conversations;
+  },
+
+  /**
+   * Deletes a conversation (its messages and product links; the scraped
+   * products themselves are kept server-side).
+   */
+  async deleteConversation(conversationId) {
+    await request(`/conversations/${conversationId}`, { method: "DELETE" });
+  },
+
+  /**
    * Loads a conversation's products and messages (used to restore state
    * after a page refresh).
    */
