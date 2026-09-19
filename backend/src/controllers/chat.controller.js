@@ -1,18 +1,46 @@
 import * as chatService from "../services/chat.service.js";
+import * as conversationService from "../services/conversation.service.js";
+import * as productService from "../services/product.service.js";
+import * as messageService from "../services/message.service.js";
 
 export const chatWithAI = async (req, res, next) => {
-  const { products, history } = req.body;
+  const { conversationId, message } = req.body;
 
-  if (!products || !Array.isArray(products) || products.length === 0) {
-    return res.status(400).json({
-      message: "At least one product is required in the products array.",
-    });
+  if (!conversationId || typeof conversationId !== "string") {
+    return res.status(400).json({ message: "conversationId is required." });
   }
 
-  if (!history || !Array.isArray(history) || history.length === 0) {
-    return res.status(400).json({
-      message: "Message history array is required.",
-    });
+  if (!message || typeof message !== "string" || !message.trim()) {
+    return res.status(400).json({ message: "message is required." });
+  }
+
+  let products;
+  let history;
+
+  try {
+    const conversation =
+      await conversationService.getConversationById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    products = await productService.listProductsForConversation(conversationId);
+
+    if (products.length === 0) {
+      return res.status(400).json({
+        message: "Add at least one product to the conversation before chatting.",
+      });
+    }
+
+    // Persist the user message first so it is part of the history loaded below
+    // (the AI service treats the last history entry as the new question).
+    await messageService.createMessage(conversationId, "user", message.trim());
+    history = await messageService.listMessagesForConversation(conversationId);
+  } catch (error) {
+    console.error("Chat setup failed:", error);
+
+    return res.status(500).json({ message: "Failed to process chat question" });
   }
 
   // Stream the reply to the client as Server-Sent Events so tokens render
@@ -24,11 +52,19 @@ export const chatWithAI = async (req, res, next) => {
   });
 
   try {
+    let fullReply = "";
+
     for await (const textChunk of chatService.streamMultiProductChat(
       products,
       history,
     )) {
+      fullReply += textChunk;
       res.write(`data: ${JSON.stringify({ text: textChunk })}\n\n`);
+    }
+
+    // Only a fully completed reply is persisted; on error nothing is saved.
+    if (fullReply) {
+      await messageService.createMessage(conversationId, "assistant", fullReply);
     }
 
     res.write(`event: done\ndata: {}\n\n`);

@@ -16,6 +16,6 @@ export async function createMessage(conversationId, role, content) {
 export async function listMessagesForConversation(conversationId) {
   return messageRepository().find({
     where: { conversationId },
-    order: { createdAt: "ASC" },
+    order: { createdAt: "ASC", id: "ASC" },
   });
 }
