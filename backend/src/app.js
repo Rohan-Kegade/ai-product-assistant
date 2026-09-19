@@ -4,6 +4,7 @@ import cors from "cors";
 import { AppDataSource } from "./db/data-source.js";
 import productRouter from "./routes/product.routes.js";
 import chatRouter from "./routes/chat.routes.js";
+import conversationRouter from "./routes/conversation.routes.js";
 
 const PORT = process.env.port;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
@@ -15,6 +16,7 @@ app.use(express.json());
 
 app.use("/api/products", productRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/conversations", conversationRouter);
 
 AppDataSource.initialize()
   .then(() => {

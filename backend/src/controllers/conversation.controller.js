@@ -1,0 +1,33 @@
+import * as conversationService from "../services/conversation.service.js";
+import * as productService from "../services/product.service.js";
+
+export const removeProductFromConversation = async (req, res, next) => {
+  try {
+    const { conversationId, productId } = req.params;
+
+    const numericProductId = Number(productId);
+
+    if (!Number.isInteger(numericProductId)) {
+      return res.status(400).json({ message: "productId must be an integer" });
+    }
+
+    const conversation = await conversationService.getConversationById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    await productService.unlinkProductFromConversation(
+      conversationId,
+      numericProductId,
+    );
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to remove product from conversation:", error);
+
+    return res.status(500).json({
+      message: "Failed to remove product from conversation",
+    });
+  }
+};
