@@ -45,6 +45,41 @@ export const listConversations = async (req, res, next) => {
   }
 };
 
+const MAX_TITLE_LENGTH = 255;
+
+export const renameConversation = async (req, res, next) => {
+  try {
+    const { conversationId } = req.params;
+    const { title } = req.body;
+
+    if (typeof title !== "string") {
+      return res.status(400).json({ message: "title is required" });
+    }
+
+    const cleanTitle = title.replace(/\s+/g, " ").trim();
+
+    if (!cleanTitle || cleanTitle.length > MAX_TITLE_LENGTH) {
+      return res.status(400).json({
+        message: `title must be 1-${MAX_TITLE_LENGTH} characters`,
+      });
+    }
+
+    const conversation = await conversationService.getConversationById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    await conversationService.setConversationTitle(conversationId, cleanTitle);
+
+    return res.status(200).json({ id: conversationId, title: cleanTitle });
+  } catch (error) {
+    console.error("Failed to rename conversation:", error);
+
+    return res.status(500).json({ message: "Failed to rename conversation" });
+  }
+};
+
 export const deleteConversation = async (req, res, next) => {
   try {
     const { conversationId } = req.params;

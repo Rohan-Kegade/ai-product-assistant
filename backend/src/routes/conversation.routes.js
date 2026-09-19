@@ -3,6 +3,7 @@ import {
   deleteConversation,
   getConversation,
   listConversations,
+  renameConversation,
   removeProductFromConversation,
 } from "../controllers/conversation.controller.js";
 
@@ -10,6 +11,7 @@ const router = express.Router();
 
 router.get("/", listConversations);
 router.get("/:conversationId", getConversation);
+router.patch("/:conversationId", renameConversation);
 router.delete("/:conversationId", deleteConversation);
 router.delete("/:conversationId/products/:productId", removeProductFromConversation);
 

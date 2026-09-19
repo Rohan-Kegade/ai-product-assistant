@@ -133,6 +133,17 @@ export function useProductDeck() {
     loadConversation(id);
   };
 
+  const renameConversation = async (id, title) => {
+    try {
+      const renamed = await productService.renameConversation(id, title);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: renamed.title } : c)),
+      );
+    } catch (err) {
+      setError(err.message || "Failed to rename conversation");
+    }
+  };
+
   const removeConversation = async (id) => {
     try {
       await productService.deleteConversation(id);
@@ -362,6 +373,7 @@ export function useProductDeck() {
     conversations,
     switchConversation,
     startNewConversation,
+    renameConversation,
     removeConversation,
     url,
     setUrl,

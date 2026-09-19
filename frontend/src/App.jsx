@@ -1,6 +1,7 @@
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { ChatWindow } from "./components/chat/ChatWindow";
 import { ChatInput } from "./components/chat/ChatInput";
+import { DeckStrip } from "./components/deck/DeckStrip";
 import { useProductDeck } from "./hooks/useProductDeck";
 import { useRef } from "react";
 
@@ -10,6 +11,7 @@ export default function App() {
     conversations,
     switchConversation,
     startNewConversation,
+    renameConversation,
     removeConversation,
     url,
     setUrl,
@@ -49,21 +51,13 @@ export default function App() {
           activeConversationId={conversationId}
           onSelectConversation={switchConversation}
           onNewConversation={startNewConversation}
+          onRenameConversation={renameConversation}
           onDeleteConversation={removeConversation}
-          url={url}
-          setUrl={setUrl}
-          products={products}
-          loadingProduct={loadingProduct}
-          loadingConversation={loadingConversation}
-          removingProductIds={removingProductIds}
-          cachedProductIds={cachedProductIds}
-          onAddProduct={handleAddProduct}
-          onRemoveProduct={handleRemoveProduct}
         />
 
         {/* Main Workspace */}
         <main className="flex-1 min-w-0 flex flex-col bg-[#f8fafc]">
-          <header className="h-[72px] shrink-0 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl flex items-center justify-between px-5 md:px-8">
+          <header className="h-14 shrink-0 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl flex items-center justify-between px-5 md:px-8">
             <div className="flex items-center gap-3">
               <div className="lg:hidden w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
                 <svg
@@ -87,12 +81,22 @@ export default function App() {
                 >
                   {activeTitle}
                 </h1>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Compare, analyze, and understand products
-                </p>
               </div>
             </div>
           </header>
+
+          {/* Product deck for the active conversation */}
+          <DeckStrip
+            products={products}
+            loading={loadingConversation}
+            url={url}
+            setUrl={setUrl}
+            loadingProduct={loadingProduct}
+            removingProductIds={removingProductIds}
+            cachedProductIds={cachedProductIds}
+            onAddProduct={handleAddProduct}
+            onRemoveProduct={handleRemoveProduct}
+          />
 
           {/* Toast Notification Banner */}
           {error && (

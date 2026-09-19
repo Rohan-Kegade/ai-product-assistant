@@ -66,3 +66,11 @@ export async function setConversationTitleIfEmpty(conversationId, title) {
 
   return (result.affected ?? 0) > 0;
 }
+
+// Manual rename. Keeps updated_at as-is so renaming doesn't reorder the list.
+export async function setConversationTitle(conversationId, title) {
+  await conversationRepository().update(
+    { id: conversationId },
+    { title, updatedAt: () => "updated_at" },
+  );
+}

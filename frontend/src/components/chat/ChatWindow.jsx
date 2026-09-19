@@ -1,15 +1,26 @@
 import { ChatBubble } from "./ChatBubble";
 import { useEffect } from "react";
 
-const SUGGESTED_PROMPTS = [
+const SINGLE_PRODUCT_PROMPTS = [
   "Summarize key features",
   "Biggest pros and cons?",
   "Is this worth buying?",
   "What's in the box?",
+  "What do reviews say?",
+  "Who is this best for?",
+  "Any common complaints?",
+  "Is the price fair?",
+];
+
+const MULTI_PRODUCT_PROMPTS = [
   "Compare these products",
   "Which one is better?",
   "Show key differences",
   "Best value for money",
+  "Compare them in a table",
+  "Which has better reviews?",
+  "Which should I buy and why?",
+  "Pros and cons of each",
 ];
 
 export function ChatWindow({
@@ -34,7 +45,11 @@ export function ChatWindow({
 
   if (loading) {
     return (
-      <div className="space-y-6 py-4" aria-busy="true" aria-label="Loading conversation">
+      <div
+        className="space-y-6 py-4"
+        aria-busy="true"
+        aria-label="Loading conversation"
+      >
         {[
           { align: "justify-end", width: "w-1/3" },
           { align: "justify-start", width: "w-2/3" },
@@ -49,6 +64,9 @@ export function ChatWindow({
       </div>
     );
   }
+
+  const suggestedPrompts =
+    productsCount > 1 ? MULTI_PRODUCT_PROMPTS : SINGLE_PRODUCT_PROMPTS;
 
   if (messages.length === 0) {
     return (
@@ -77,12 +95,12 @@ export function ChatWindow({
         </h2>
 
         <p className="text-sm text-slate-500 mt-2 text-center max-w-md leading-6">
-          Add products to your product deck and ask AI to analyze features,
-          compare specifications, evaluate value, or make a recommendation.
+          Add products above and ask AI to analyze features, compare
+          specifications, evaluate value, or make a recommendation.
         </p>
 
         <div className="flex flex-wrap justify-center gap-2 mt-6">
-          {SUGGESTED_PROMPTS.map((text) => (
+          {suggestedPrompts.map((text) => (
             <button
               key={text}
               onClick={() => onSelectPrompt(text)}

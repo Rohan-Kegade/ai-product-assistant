@@ -68,6 +68,17 @@ export const productService = {
   },
 
   /**
+   * Renames a conversation. Resolves to { id, title } (title as cleaned by
+   * the server).
+   */
+  async renameConversation(conversationId, title) {
+    return request(`/conversations/${conversationId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ title }),
+    });
+  },
+
+  /**
    * Deletes a conversation (its messages and product links; the scraped
    * products themselves are kept server-side).
    */
