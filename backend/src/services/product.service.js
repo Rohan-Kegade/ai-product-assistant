@@ -2,6 +2,7 @@ import * as scraperService from "../services/scraper.service.js";
 import { AppDataSource } from "../db/data-source.js";
 import { Product } from "../db/entities/Product.js";
 import { ConversationProduct } from "../db/entities/ConversationProduct.js";
+import { touchConversation } from "./conversation.service.js";
 
 const productRepository = () => AppDataSource.getRepository(Product);
 const conversationProductRepository = () =>
@@ -12,7 +13,9 @@ export const scrapeProductData = async (url) => {
 
   const product = await scraperService.scrapeProduct(url);
 
-  if (!product) {
+  // The scraper returns an all-null object (rather than throwing) for pages
+  // that aren't real product pages, e.g. an unknown ASIN.
+  if (!product || !product.title) {
     throw new Error("Unable to extract product data from URL");
   }
 
@@ -66,7 +69,10 @@ export async function linkProductToConversation(conversationId, productId) {
     productId,
   });
 
-  return conversationProductRepository().save(link);
+  const saved = await conversationProductRepository().save(link);
+  await touchConversation(conversationId);
+
+  return saved;
 }
 
 export async function unlinkProductFromConversation(conversationId, productId) {
@@ -91,5 +97,8 @@ export function toPublicProduct(product) {
     id: product.id,
     title: product.title,
     price: product.price,
+    rating: product.rating,
+    reviewCount: product.reviewCount,
+    url: product.url,
   };
 }

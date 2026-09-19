@@ -33,6 +33,39 @@ export const removeProductFromConversation = async (req, res, next) => {
   }
 };
 
+export const listConversations = async (req, res, next) => {
+  try {
+    const conversations = await conversationService.listConversations();
+
+    return res.status(200).json({ conversations });
+  } catch (error) {
+    console.error("Failed to list conversations:", error);
+
+    return res.status(500).json({ message: "Failed to list conversations" });
+  }
+};
+
+export const deleteConversation = async (req, res, next) => {
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await conversationService.getConversationById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    // FKs cascade: removes the join rows and messages, keeps products rows.
+    await conversationService.deleteConversation(conversationId);
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to delete conversation:", error);
+
+    return res.status(500).json({ message: "Failed to delete conversation" });
+  }
+};
+
 export const getConversation = async (req, res, next) => {
   try {
     const { conversationId } = req.params;

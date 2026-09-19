@@ -4,7 +4,7 @@ import * as productService from "../services/product.service.js";
 import * as messageService from "../services/message.service.js";
 
 export const chatWithAI = async (req, res, next) => {
-  const { conversationId, message } = req.body;
+  const { conversationId, message, retry } = req.body;
 
   if (!conversationId || typeof conversationId !== "string") {
     return res.status(400).json({ message: "conversationId is required." });
@@ -35,8 +35,20 @@ export const chatWithAI = async (req, res, next) => {
 
     // Persist the user message first so it is part of the history loaded below
     // (the AI service treats the last history entry as the new question).
-    await messageService.createMessage(conversationId, "user", message.trim());
-    history = await messageService.listMessagesForConversation(conversationId);
+    // On retry the question is already stored (a previous attempt failed before
+    // any reply was saved), so don't insert it a second time.
+    const trimmedMessage = message.trim();
+    let stored = await messageService.listMessagesForConversation(conversationId);
+    const last = stored[stored.length - 1];
+    const isRetryOfLast =
+      retry === true && last?.role === "user" && last.content === trimmedMessage;
+
+    if (!isRetryOfLast) {
+      await messageService.createMessage(conversationId, "user", trimmedMessage);
+      stored = await messageService.listMessagesForConversation(conversationId);
+    }
+
+    history = stored;
   } catch (error) {
     console.error("Chat setup failed:", error);
 

@@ -20,7 +20,7 @@ export const addProduct = async (req, res, next) => {
       });
     }
 
-    let conversation;
+    let conversation = null;
 
     if (conversationId) {
       conversation = await conversationService.getConversationById(conversationId);
@@ -28,11 +28,10 @@ export const addProduct = async (req, res, next) => {
       if (!conversation) {
         return res.status(404).json({ message: "Conversation not found" });
       }
-    } else {
-      conversation = await conversationService.createConversation();
     }
 
     let product = await productService.findProductByAsin(validation.asin);
+    const cached = Boolean(product);
 
     if (!product) {
       const scraped = await productService.scrapeProductData(validation.url);
@@ -43,11 +42,18 @@ export const addProduct = async (req, res, next) => {
       });
     }
 
+    // Create the conversation only after the product is in hand, so a failed
+    // scrape doesn't leave an empty conversation behind.
+    if (!conversation) {
+      conversation = await conversationService.createConversation();
+    }
+
     await productService.linkProductToConversation(conversation.id, product.id);
 
     return res.status(200).json({
       conversationId: conversation.id,
       product: productService.toPublicProduct(product),
+      cached,
     });
   } catch (error) {
     console.error("Product scraping failed:", error);
