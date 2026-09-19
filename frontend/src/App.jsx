@@ -80,7 +80,7 @@ export default function App() {
           )}
 
           {/* Chat Workspace */}
-          <div className="flex-1 min-h-0 p-4 md:p-6 lg:p-8 flex flex-col max-w-5xl mx-auto w-full">
+          <div className="flex-1 min-h-0 px-4 md:px-6 lg:px-8 pb-3 flex flex-col max-w-5xl mx-auto w-full">
             <div
               ref={chatContainerRef}
               className="flex-1 min-h-0 overflow-y-auto [scrollbar-width:none]"
