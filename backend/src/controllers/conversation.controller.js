@@ -83,6 +83,7 @@ export const getConversation = async (req, res, next) => {
 
     return res.status(200).json({
       conversationId: conversation.id,
+      title: conversation.title,
       products: products.map(productService.toPublicProduct),
       messages: messages.map(({ id, role, content }) => ({ id, role, content })),
     });

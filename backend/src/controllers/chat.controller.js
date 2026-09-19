@@ -1,7 +1,24 @@
 import * as chatService from "../services/chat.service.js";
+import * as aiService from "../services/ai.service.js";
 import * as conversationService from "../services/conversation.service.js";
 import * as productService from "../services/product.service.js";
 import * as messageService from "../services/message.service.js";
+
+// Longest we hold the `done` event back waiting for the title.
+const TITLE_WAIT_MS = 5000;
+
+// Never rejects: a missing title just leaves the derived fallback in place.
+async function generateAndSaveTitle(conversationId, question) {
+  try {
+    const title = await aiService.generateConversationTitle(question);
+
+    if (title) {
+      await conversationService.setConversationTitleIfEmpty(conversationId, title);
+    }
+  } catch (error) {
+    console.error("Saving conversation title failed:", error);
+  }
+}
 
 export const chatWithAI = async (req, res, next) => {
   const { conversationId, message, retry } = req.body;
@@ -16,6 +33,7 @@ export const chatWithAI = async (req, res, next) => {
 
   let products;
   let history;
+  let needsTitle = false;
 
   try {
     const conversation =
@@ -49,6 +67,10 @@ export const chatWithAI = async (req, res, next) => {
     }
 
     history = stored;
+
+    // Name the conversation from its first question (also covers older
+    // conversations that predate stored titles).
+    needsTitle = !conversation.title;
   } catch (error) {
     console.error("Chat setup failed:", error);
 
@@ -62,6 +84,15 @@ export const chatWithAI = async (req, res, next) => {
     "Cache-Control": "no-cache",
     Connection: "keep-alive",
   });
+
+  // Generated alongside the answer stream and awaited before `done`, so the
+  // frontend's post-chat list refresh already sees the saved title.
+  const titlePromise = needsTitle
+    ? generateAndSaveTitle(
+        conversationId,
+        history.find((m) => m.role === "user")?.content ?? message.trim(),
+      )
+    : null;
 
   try {
     let fullReply = "";
@@ -77,6 +108,13 @@ export const chatWithAI = async (req, res, next) => {
     // Only a fully completed reply is persisted; on error nothing is saved.
     if (fullReply) {
       await messageService.createMessage(conversationId, "assistant", fullReply);
+    }
+
+    if (titlePromise) {
+      await Promise.race([
+        titlePromise,
+        new Promise((resolve) => setTimeout(resolve, TITLE_WAIT_MS)),
+      ]);
     }
 
     res.write(`event: done\ndata: {}\n\n`);

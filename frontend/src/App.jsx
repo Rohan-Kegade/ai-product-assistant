@@ -33,6 +33,13 @@ export default function App() {
 
   const chatContainerRef = useRef(null);
 
+  // The conversation's name comes from the list (first product's title); the
+  // list refreshes after every add/remove/chat, so it catches up shortly after
+  // a new conversation is created.
+  const activeTitle =
+    conversations.find((c) => c.id === conversationId)?.title ||
+    "New conversation";
+
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
       <div className="flex h-screen overflow-hidden">
@@ -74,8 +81,11 @@ export default function App() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-sm font-bold uppercase text-slate-900">
-                  Product Research
+                <h1
+                  title={activeTitle}
+                  className="text-sm font-bold text-slate-900 truncate max-w-[60vw] md:max-w-xl"
+                >
+                  {activeTitle}
                 </h1>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   Compare, analyze, and understand products

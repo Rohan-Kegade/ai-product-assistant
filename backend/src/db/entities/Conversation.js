@@ -10,6 +10,12 @@ export const Conversation = new EntitySchema({
       primary: true,
       generated: "uuid",
     },
+    // Set once from the first user question (LLM-generated); null until then.
+    title: {
+      type: "varchar",
+      length: 255,
+      nullable: true,
+    },
     createdAt: {
       type: "datetime",
       createDate: true,
