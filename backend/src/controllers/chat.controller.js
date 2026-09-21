@@ -1,14 +1,10 @@
-import * as chatService from "../services/chat.service.js";
 import * as aiService from "../services/ai.service.js";
 import * as conversationService from "../services/conversation.service.js";
 import * as productService from "../services/product.service.js";
 import * as messageService from "../services/message.service.js";
 
-// Longest we hold the `done` event back waiting for the title.
-const TITLE_WAIT_MS = 5000;
-
 // Never rejects: a missing title just leaves the derived fallback in place.
-async function generateAndSaveTitle(conversationId, question) {
+async function generateAndSaveConversationTitle(conversationId, question) {
   try {
     const title = await aiService.generateConversationTitle(question);
 
@@ -20,7 +16,7 @@ async function generateAndSaveTitle(conversationId, question) {
   }
 }
 
-export const chatWithAI = async (req, res, next) => {
+export const streamChatReply = async (req, res, next) => {
   const { conversationId, message, retry } = req.body;
 
   if (!conversationId || typeof conversationId !== "string") {
@@ -32,8 +28,8 @@ export const chatWithAI = async (req, res, next) => {
   }
 
   let products;
-  let history;
-  let needsTitle = false;
+  let chatHistory;
+  let conversationNeedsTitle = false;
 
   try {
     const conversation =
@@ -51,26 +47,17 @@ export const chatWithAI = async (req, res, next) => {
       });
     }
 
-    // Persist the user message first so it is part of the history loaded below
-    // (the AI service treats the last history entry as the new question).
-    // On retry the question is already stored (a previous attempt failed before
-    // any reply was saved), so don't insert it a second time.
-    const trimmedMessage = message.trim();
-    let stored = await messageService.listMessagesForConversation(conversationId);
-    const last = stored[stored.length - 1];
-    const isRetryOfLast =
-      retry === true && last?.role === "user" && last.content === trimmedMessage;
-
-    if (!isRetryOfLast) {
-      await messageService.createMessage(conversationId, "user", trimmedMessage);
-      stored = await messageService.listMessagesForConversation(conversationId);
-    }
-
-    history = stored;
+    // Persist the question first: the AI treats the last history entry as
+    // the new question.
+    chatHistory = await messageService.saveUserQuestionAndGetHistory(
+      conversationId,
+      message.trim(),
+      { retry: retry === true },
+    );
 
     // Name the conversation from its first question (also covers older
     // conversations that predate stored titles).
-    needsTitle = !conversation.title;
+    conversationNeedsTitle = !conversation.title;
   } catch (error) {
     console.error("Chat setup failed:", error);
 
@@ -87,19 +74,19 @@ export const chatWithAI = async (req, res, next) => {
 
   // Generated alongside the answer stream and awaited before `done`, so the
   // frontend's post-chat list refresh already sees the saved title.
-  const titlePromise = needsTitle
-    ? generateAndSaveTitle(
+  const titlePromise = conversationNeedsTitle
+    ? generateAndSaveConversationTitle(
         conversationId,
-        history.find((m) => m.role === "user")?.content ?? message.trim(),
+        chatHistory.find((message) => message.role === "user").content,
       )
     : null;
 
   try {
     let fullReply = "";
 
-    for await (const textChunk of chatService.streamMultiProductChat(
+    for await (const textChunk of aiService.streamProductChat(
       products,
-      history,
+      chatHistory,
     )) {
       fullReply += textChunk;
       res.write(`data: ${JSON.stringify({ text: textChunk })}\n\n`);
@@ -110,12 +97,8 @@ export const chatWithAI = async (req, res, next) => {
       await messageService.createMessage(conversationId, "assistant", fullReply);
     }
 
-    if (titlePromise) {
-      await Promise.race([
-        titlePromise,
-        new Promise((resolve) => setTimeout(resolve, TITLE_WAIT_MS)),
-      ]);
-    }
+    // Bounded by the title call's own timeout.
+    await titlePromise;
 
     res.write(`event: done\ndata: {}\n\n`);
   } catch (error) {

@@ -13,22 +13,22 @@ export default function App() {
     startNewConversation,
     renameConversation,
     removeConversation,
-    url,
-    setUrl,
+    productUrl,
+    setProductUrl,
     products,
-    loadingProduct,
-    question,
-    setQuestion,
-    asking,
+    isAddingProduct,
+    questionDraft,
+    setQuestionDraft,
+    isAnswering,
     messages,
     error,
     clearError,
-    handleAddProduct,
-    handleRemoveProduct,
-    handleAskQuestion,
-    handleRetry,
+    addProduct,
+    removeProduct,
+    askQuestion,
+    retryLastQuestion,
     canRetry,
-    loadingConversation,
+    isLoadingConversation,
     removingProductIds,
     cachedProductIds,
   } = useProductDeck();
@@ -103,14 +103,14 @@ export default function App() {
           {/* Product deck for the active conversation */}
           <DeckStrip
             products={products}
-            loading={loadingConversation}
-            url={url}
-            setUrl={setUrl}
-            loadingProduct={loadingProduct}
+            isLoadingConversation={isLoadingConversation}
+            productUrl={productUrl}
+            setProductUrl={setProductUrl}
+            isAddingProduct={isAddingProduct}
             removingProductIds={removingProductIds}
             cachedProductIds={cachedProductIds}
-            onAddProduct={handleAddProduct}
-            onRemoveProduct={handleRemoveProduct}
+            onAddProduct={addProduct}
+            onRemoveProduct={removeProduct}
           />
 
           {/* Toast Notification Banner */}
@@ -134,23 +134,23 @@ export default function App() {
             >
               <ChatWindow
                 messages={messages}
-                asking={asking}
-                productsCount={products.length}
-                onSelectPrompt={handleAskQuestion}
+                isAnswering={isAnswering}
+                productCount={products.length}
+                onSelectPrompt={askQuestion}
                 containerRef={chatContainerRef}
-                loading={loadingConversation}
+                isLoadingConversation={isLoadingConversation}
                 canRetry={canRetry}
-                onRetry={handleRetry}
+                onRetry={retryLastQuestion}
               />
             </div>
 
             <ChatInput
-              question={question}
-              setQuestion={setQuestion}
-              onAskQuestion={handleAskQuestion}
-              productsCount={products.length}
-              asking={asking}
-              loading={loadingConversation}
+              questionDraft={questionDraft}
+              setQuestionDraft={setQuestionDraft}
+              onAskQuestion={askQuestion}
+              productCount={products.length}
+              isAnswering={isAnswering}
+              isLoadingConversation={isLoadingConversation}
             />
           </div>
         </main>

@@ -26,11 +26,11 @@ const MULTI_PRODUCT_PROMPTS = [
 
 export function ChatWindow({
   messages,
-  asking,
-  productsCount,
+  isAnswering,
+  productCount,
   onSelectPrompt,
   containerRef,
-  loading,
+  isLoadingConversation,
   canRetry,
   onRetry,
 }) {
@@ -42,9 +42,9 @@ export function ChatWindow({
         behavior: "smooth",
       });
     }
-  }, [messages, asking, containerRef]);
+  }, [messages, isAnswering, containerRef]);
 
-  if (loading) {
+  if (isLoadingConversation) {
     return (
       <div
         className="space-y-6 py-4"
@@ -67,7 +67,7 @@ export function ChatWindow({
   }
 
   const suggestedPrompts =
-    productsCount > 1 ? MULTI_PRODUCT_PROMPTS : SINGLE_PRODUCT_PROMPTS;
+    productCount > 1 ? MULTI_PRODUCT_PROMPTS : SINGLE_PRODUCT_PROMPTS;
 
   if (messages.length === 0) {
     return (
@@ -91,7 +91,7 @@ export function ChatWindow({
             <button
               key={text}
               onClick={() => onSelectPrompt(text)}
-              disabled={productsCount === 0}
+              disabled={productCount === 0}
               className="px-3.5 py-2 rounded-full border border-slate-200 bg-white hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 text-xs font-medium text-slate-900 transition shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {text}
@@ -132,7 +132,7 @@ export function ChatWindow({
         </div>
       )}
 
-      {asking && messages[messages.length - 1]?.role !== "assistant" && (
+      {isAnswering && messages[messages.length - 1]?.role !== "assistant" && (
         <div className="flex items-start">
           <LogoMark size={32} className="mr-3" />
 

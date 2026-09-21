@@ -34,7 +34,7 @@ export const addProduct = async (req, res, next) => {
     const cached = Boolean(product);
 
     if (!product) {
-      const scraped = await productService.scrapeProductData(validation.url);
+      const scraped = await productService.scrapeAndValidateProduct(validation.url);
       product = await productService.saveProduct({
         asin: validation.asin,
         url: validation.url,

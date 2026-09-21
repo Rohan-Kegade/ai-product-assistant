@@ -2,13 +2,13 @@ import * as scraperService from "../services/scraper.service.js";
 import { AppDataSource } from "../db/data-source.js";
 import { Product } from "../db/entities/Product.js";
 import { ConversationProduct } from "../db/entities/ConversationProduct.js";
-import { touchConversation } from "./conversation.service.js";
+import { bumpConversationUpdatedAt } from "./conversation.service.js";
 
 const productRepository = () => AppDataSource.getRepository(Product);
 const conversationProductRepository = () =>
   AppDataSource.getRepository(ConversationProduct);
 
-export const scrapeProductData = async (url) => {
+export const scrapeAndValidateProduct = async (url) => {
   console.log(`Scraping product from URL: ${url}`);
 
   const product = await scraperService.scrapeProduct(url);
@@ -29,23 +29,12 @@ export async function findProductByAsin(asin) {
 }
 
 // Persists a freshly scraped product. `scraped` is the raw shape returned by
-// scrapeProductData/scraper.service.js.
+// scrapeAndValidateProduct/scraper.service.js.
 export async function saveProduct({ asin, url, scraped }) {
   const product = productRepository().create({
+    ...scraped,
     asin,
     url,
-    title: scraped.title,
-    price: scraped.price,
-    rating: scraped.rating,
-    reviewCount: scraped.reviewCount,
-    boughtLastMonth: scraped.boughtLastMonth,
-    color: scraped.color,
-    size: scraped.size,
-    about: scraped.about,
-    reviewSummary: scraped.reviewSummary,
-    offers: scraped.offers,
-    productDetails: scraped.productDetails,
-    techDetails: scraped.techDetails,
     scrapedAt: new Date(),
   });
 
@@ -70,7 +59,7 @@ export async function linkProductToConversation(conversationId, productId) {
   });
 
   const saved = await conversationProductRepository().save(link);
-  await touchConversation(conversationId);
+  await bumpConversationUpdatedAt(conversationId);
 
   return saved;
 }

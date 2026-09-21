@@ -16,7 +16,7 @@ export async function getConversationById(conversationId) {
 
 // Bumps updated_at so the conversation list orders by real activity (the
 // column only auto-updates when the conversation row itself is saved).
-export async function touchConversation(conversationId) {
+export async function bumpConversationUpdatedAt(conversationId) {
   await conversationRepository().update(
     { id: conversationId },
     { updatedAt: new Date() },

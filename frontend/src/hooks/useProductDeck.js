@@ -1,74 +1,57 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { productService } from "../services/api";
+import { api } from "../services/api";
+import {
+  loadActiveConversationId,
+  readHashConversationId,
+  saveActiveConversationId,
+} from "./activeConversationStore";
 
-const CONVERSATION_KEY = "conversationId";
+// Adds `text` to the assistant message `id` (creating it on first use), so
+// streamed chunks and errors share one code path. Derived purely from
+// `messages`, since React StrictMode runs state updaters twice in dev.
+function upsertAssistantMessage(messages, id, text, { separator = "", error } = {}) {
+  const index = messages.findIndex((msg) => msg.id === id);
 
-function readStoredConversationId() {
-  try {
-    return localStorage.getItem(CONVERSATION_KEY);
-  } catch {
-    return null;
+  if (index === -1) {
+    return [...messages, { id, role: "assistant", content: text, error }];
   }
-}
 
-function storeConversationId(id) {
-  try {
-    if (id) localStorage.setItem(CONVERSATION_KEY, id);
-    else localStorage.removeItem(CONVERSATION_KEY);
-  } catch {
-    // storage unavailable - the conversation just won't survive a refresh
-  }
-}
-
-// The active conversation is mirrored in the URL hash (#/c/<id>) so a link
-// resumes it, e.g. in another tab; the hash wins over localStorage on load.
-const HASH_PATTERN = /^#\/c\/([0-9a-f-]{36})$/i;
-
-function readHashConversationId() {
-  const match = window.location.hash.match(HASH_PATTERN);
-  return match ? match[1] : null;
-}
-
-function writeHashConversationId(id) {
-  const next = id ? `#/c/${id}` : "";
-  if (window.location.hash === next) return;
-  window.history.replaceState(
-    null,
-    "",
-    `${window.location.pathname}${window.location.search}${next}`,
-  );
-}
-
-function initialConversationId() {
-  return readHashConversationId() || readStoredConversationId();
+  const updated = [...messages];
+  const existing = updated[index];
+  updated[index] = {
+    ...existing,
+    content: existing.content + separator + text,
+    error: error ?? existing.error,
+  };
+  return updated;
 }
 
 export function useProductDeck() {
-  const [conversationId, setConversationId] = useState(initialConversationId);
+  const [conversationId, setConversationId] = useState(loadActiveConversationId);
   const [conversations, setConversations] = useState([]);
-  const [loadingConversation, setLoadingConversation] = useState(() =>
-    Boolean(initialConversationId()),
+  const [isLoadingConversation, setIsLoadingConversation] = useState(() =>
+    Boolean(loadActiveConversationId()),
   );
   const [removingProductIds, setRemovingProductIds] = useState([]);
   // Products whose last add was served from the server-side cache. Add-time
   // only: not stored, cleared when the conversation changes.
   const [cachedProductIds, setCachedProductIds] = useState([]);
-  const [url, setUrl] = useState("");
+  const [productUrl, setProductUrl] = useState("");
   const [products, setProducts] = useState([]);
-  const [loadingProduct, setLoadingProduct] = useState(false);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
 
-  const [question, setQuestion] = useState("");
-  const [asking, setAsking] = useState(false);
+  const [questionDraft, setQuestionDraft] = useState("");
+  const [isAnswering, setIsAnswering] = useState(false);
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
 
   // Always holds the conversation the user is currently looking at, so async
   // work started in one conversation can tell it is no longer the active one.
-  const activeIdRef = useRef(conversationId);
+  const activeConversationIdRef = useRef(conversationId);
 
   const refreshConversations = useCallback(async () => {
     try {
-      setConversations(await productService.listConversations());
+      setConversations(await api.listConversations());
     } catch {
       // the list is a convenience - don't surface an error banner for it
     }
@@ -76,66 +59,65 @@ export function useProductDeck() {
 
   // Makes `id` (or nothing, for a new conversation) the active one and clears
   // the view; the caller loads its contents if needed.
-  const activate = useCallback((id) => {
-    activeIdRef.current = id;
+  const setActiveConversation = useCallback((id) => {
+    activeConversationIdRef.current = id;
     setConversationId(id);
-    storeConversationId(id);
-    writeHashConversationId(id);
+    saveActiveConversationId(id);
     setProducts([]);
     setMessages([]);
     setCachedProductIds([]);
     setRemovingProductIds([]);
-    setQuestion("");
-    setAsking(false);
-    setLoadingConversation(false);
+    setQuestionDraft("");
+    setIsAnswering(false);
+    setIsLoadingConversation(false);
     setError(null);
   }, []);
 
   // Fetches a conversation's contents into view. Assumes `id` is already the
-  // active one (see `activate`).
-  const fetchConversation = useCallback(
+  // active one (see `setActiveConversation`).
+  const loadConversationContents = useCallback(
     async (id) => {
       try {
-        const data = await productService.getConversation(id);
+        const data = await api.getConversation(id);
         // Ignore the response if the user has since switched away.
-        if (activeIdRef.current !== id) return;
-        storeConversationId(id);
+        if (activeConversationIdRef.current !== id) return;
+        saveActiveConversationId(id);
         setProducts(data.products);
         setMessages(data.messages);
       } catch (err) {
-        if (activeIdRef.current !== id) return;
+        if (activeConversationIdRef.current !== id) return;
         if (err.status === 404) {
           // Conversation no longer exists server-side - start fresh.
-          activate(null);
+          setActiveConversation(null);
         } else {
           setError(err.message || "Failed to load conversation");
         }
       } finally {
-        if (activeIdRef.current === id) setLoadingConversation(false);
+        if (activeConversationIdRef.current === id) setIsLoadingConversation(false);
       }
     },
-    [activate],
+    [setActiveConversation],
   );
 
-  const loadConversation = useCallback(
+  const openConversation = useCallback(
     (id) => {
-      activate(id);
-      setLoadingConversation(true);
-      return fetchConversation(id);
+      setActiveConversation(id);
+      setIsLoadingConversation(true);
+      return loadConversationContents(id);
     },
-    [activate, fetchConversation],
+    [setActiveConversation, loadConversationContents],
   );
 
-  const startNewConversation = () => activate(null);
+  const startNewConversation = () => setActiveConversation(null);
 
   const switchConversation = (id) => {
-    if (id === activeIdRef.current) return;
-    loadConversation(id);
+    if (id === activeConversationIdRef.current) return;
+    openConversation(id);
   };
 
   const renameConversation = async (id, title) => {
     try {
-      const renamed = await productService.renameConversation(id, title);
+      const renamed = await api.renameConversation(id, title);
       setConversations((prev) =>
         prev.map((c) => (c.id === id ? { ...c, title: renamed.title } : c)),
       );
@@ -146,7 +128,7 @@ export function useProductDeck() {
 
   const removeConversation = async (id) => {
     try {
-      await productService.deleteConversation(id);
+      await api.deleteConversation(id);
     } catch (err) {
       // Already gone server-side counts as deleted.
       if (err.status !== 404) {
@@ -155,52 +137,51 @@ export function useProductDeck() {
       }
     }
 
-    if (activeIdRef.current === id) activate(null);
+    if (activeConversationIdRef.current === id) setActiveConversation(null);
     refreshConversations();
   };
 
   // Restore the conversation saved before a refresh (or named in the URL) and
   // load the conversation list.
   useEffect(() => {
-    const initialId = activeIdRef.current;
-    if (initialId) fetchConversation(initialId);
+    const initialId = activeConversationIdRef.current;
+    if (initialId) loadConversationContents(initialId);
     refreshConversations();
-  }, [fetchConversation, refreshConversations]);
+  }, [loadConversationContents, refreshConversations]);
 
   // Follow manual hash edits / back-forward navigation.
   useEffect(() => {
     const onHashChange = () => {
       const id = readHashConversationId();
-      if (id && id !== activeIdRef.current) loadConversation(id);
+      if (id && id !== activeConversationIdRef.current) openConversation(id);
     };
 
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, [loadConversation]);
+  }, [openConversation]);
 
-  const handleAddProduct = async () => {
-    const trimmedUrl = url.trim();
-    if (!trimmedUrl || loadingProduct || loadingConversation) return;
+  const addProduct = async () => {
+    const trimmedUrl = productUrl.trim();
+    if (!trimmedUrl || isAddingProduct || isLoadingConversation) return;
 
-    const startedIn = activeIdRef.current;
+    const startedInConversationId = activeConversationIdRef.current;
 
-    setLoadingProduct(true);
+    setIsAddingProduct(true);
     setError(null);
 
     try {
-      const data = await productService.addProductByUrl(trimmedUrl, startedIn);
+      const data = await api.addProductByUrl(trimmedUrl, startedInConversationId);
 
       refreshConversations();
 
       // The user switched conversations while this was in flight - the
       // product is saved server-side, but don't show it in the wrong view.
-      if (activeIdRef.current !== startedIn) return;
+      if (activeConversationIdRef.current !== startedInConversationId) return;
 
-      if (data.conversationId !== startedIn) {
-        activeIdRef.current = data.conversationId;
+      if (data.conversationId !== startedInConversationId) {
+        activeConversationIdRef.current = data.conversationId;
         setConversationId(data.conversationId);
-        storeConversationId(data.conversationId);
-        writeHashConversationId(data.conversationId);
+        saveActiveConversationId(data.conversationId);
       }
 
       setProducts((prev) =>
@@ -212,30 +193,30 @@ export function useProductDeck() {
         const rest = prev.filter((id) => id !== data.product.id);
         return data.cached ? [...rest, data.product.id] : rest;
       });
-      setUrl("");
+      setProductUrl("");
     } catch (err) {
-      if (activeIdRef.current === startedIn) {
+      if (activeConversationIdRef.current === startedInConversationId) {
         setError(err.message || "Failed to add product");
       }
     } finally {
-      setLoadingProduct(false);
+      setIsAddingProduct(false);
     }
   };
 
-  const handleRemoveProduct = async (id) => {
+  const removeProduct = async (id) => {
     if (removingProductIds.includes(id)) return;
 
-    const startedIn = activeIdRef.current;
+    const startedInConversationId = activeConversationIdRef.current;
     setError(null);
     setRemovingProductIds((prev) => [...prev, id]);
 
     try {
-      await productService.removeProduct(startedIn, id);
+      await api.removeProduct(startedInConversationId, id);
       refreshConversations();
-      if (activeIdRef.current !== startedIn) return;
+      if (activeConversationIdRef.current !== startedInConversationId) return;
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      if (activeIdRef.current === startedIn) {
+      if (activeConversationIdRef.current === startedInConversationId) {
         setError(err.message || "Failed to remove product");
       }
     } finally {
@@ -252,12 +233,12 @@ export function useProductDeck() {
       !trimmedQuestion ||
       !conversationId ||
       products.length === 0 ||
-      asking ||
-      loadingConversation
+      isAnswering ||
+      isLoadingConversation
     )
       return;
 
-    const askedIn = conversationId;
+    const askedInConversationId = conversationId;
 
     if (retry) {
       setMessages((prev) =>
@@ -270,87 +251,45 @@ export function useProductDeck() {
       ]);
     }
 
-    setQuestion("");
-    setAsking(true);
+    setQuestionDraft("");
+    setIsAnswering(true);
     setError(null);
 
-    // Stable id for the assistant message being streamed in, so the update
-    // is derived purely from `prev` - React 18 StrictMode invokes setState
-    // updaters twice in dev, so mutating an outer variable here (instead of
-    // reading it back from `prev`) would misattribute the second chunk.
     const assistantMessageId = `assistant-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    // Drop chunks that arrive after the user switched conversations; the full
+    // reply is saved server-side and shows up when they switch back.
     const appendToAssistant = (text) => {
-      // Drop chunks that arrive after the user switched conversations; the
-      // full reply is saved server-side and shows up when they switch back.
-      if (activeIdRef.current !== askedIn) return;
-
-      setMessages((prev) => {
-        const existingIndex = prev.findIndex(
-          (msg) => msg.id === assistantMessageId,
-        );
-
-        if (existingIndex === -1) {
-          return [
-            ...prev,
-            { id: assistantMessageId, role: "assistant", content: text },
-          ];
-        }
-
-        const updated = [...prev];
-        const existing = updated[existingIndex];
-        updated[existingIndex] = {
-          ...existing,
-          content: existing.content + text,
-        };
-        return updated;
-      });
+      if (activeConversationIdRef.current !== askedInConversationId) return;
+      setMessages((prev) => upsertAssistantMessage(prev, assistantMessageId, text));
     };
 
     try {
-      await productService.askQuestion(
+      await api.streamAnswer(
         conversationId,
         trimmedQuestion,
         (chunk) => appendToAssistant(chunk),
         { retry },
       );
     } catch (err) {
-      if (activeIdRef.current !== askedIn) return;
+      if (activeConversationIdRef.current !== askedInConversationId) return;
 
       const errorMessage = err.message || "Failed to fetch response.";
-      setMessages((prev) => {
-        const existingIndex = prev.findIndex(
-          (msg) => msg.id === assistantMessageId,
-        );
-
-        if (existingIndex === -1) {
-          return [
-            ...prev,
-            {
-              id: assistantMessageId,
-              role: "assistant",
-              content: `**Error:** ${errorMessage}`,
-              error: true,
-            },
-          ];
-        }
-
-        const updated = [...prev];
-        const existing = updated[existingIndex];
-        updated[existingIndex] = {
-          ...existing,
-          content: `${existing.content}\n\n**Error:** ${errorMessage}`,
-          error: true,
-        };
-        return updated;
-      });
+      setMessages((prev) =>
+        upsertAssistantMessage(
+          prev,
+          assistantMessageId,
+          `**Error:** ${errorMessage}`,
+          { separator: "\n\n", error: true },
+        ),
+      );
     } finally {
-      if (activeIdRef.current === askedIn) setAsking(false);
+      if (activeConversationIdRef.current === askedInConversationId) setIsAnswering(false);
       refreshConversations();
     }
   };
 
-  const handleAskQuestion = (questionText = question) =>
+  const askQuestion = (questionText = questionDraft) =>
     sendQuestion(questionText);
 
   // A question is unanswered when the last message is the user's (e.g. after
@@ -358,13 +297,13 @@ export function useProductDeck() {
   const lastMessage = messages[messages.length - 1];
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const canRetry =
-    !asking &&
-    !loadingConversation &&
+    !isAnswering &&
+    !isLoadingConversation &&
     products.length > 0 &&
     Boolean(lastUserMessage) &&
     (lastMessage?.role === "user" || Boolean(lastMessage?.error));
 
-  const handleRetry = () => {
+  const retryLastQuestion = () => {
     if (canRetry) sendQuestion(lastUserMessage.content, { retry: true });
   };
 
@@ -375,22 +314,22 @@ export function useProductDeck() {
     startNewConversation,
     renameConversation,
     removeConversation,
-    url,
-    setUrl,
+    productUrl,
+    setProductUrl,
     products,
-    loadingProduct,
-    question,
-    setQuestion,
-    asking,
+    isAddingProduct,
+    questionDraft,
+    setQuestionDraft,
+    isAnswering,
     messages,
     error,
     clearError: () => setError(null),
-    handleAddProduct,
-    handleRemoveProduct,
-    handleAskQuestion,
-    handleRetry,
+    addProduct,
+    removeProduct,
+    askQuestion,
+    retryLastQuestion,
     canRetry,
-    loadingConversation,
+    isLoadingConversation,
     removingProductIds,
     cachedProductIds,
   };

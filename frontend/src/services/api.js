@@ -31,7 +31,7 @@ async function request(endpoint, options = {}) {
   return response.json();
 }
 
-export const productService = {
+export const api = {
   /**
    * Scrapes (or reuses) a product and links it to a conversation. Omit
    * conversationId to start a new conversation. Resolves to
@@ -101,7 +101,7 @@ export const productService = {
    * Pass { retry: true } to re-run a question whose previous attempt failed,
    * so the server doesn't store the user message a second time.
    */
-  async askQuestion(conversationId, message, onChunk, { retry = false } = {}) {
+  async streamAnswer(conversationId, message, onChunk, { retry = false } = {}) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

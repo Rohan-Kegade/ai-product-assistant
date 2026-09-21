@@ -17,21 +17,21 @@ function productTooltip(product, cached) {
 
 export function DeckStrip({
   products,
-  loading,
-  url,
-  setUrl,
-  loadingProduct,
+  isLoadingConversation,
+  productUrl,
+  setProductUrl,
+  isAddingProduct,
   removingProductIds,
   cachedProductIds,
   onAddProduct,
   onRemoveProduct,
 }) {
-  const [adding, setAdding] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-  const busy = loading || loadingProduct;
+  const busy = isLoadingConversation || isAddingProduct;
   // An empty conversation needs its first product before anything else works,
   // so the URL box is always open then.
-  const showForm = adding || (!loading && products.length === 0);
+  const showForm = isFormOpen || (!isLoadingConversation && products.length === 0);
 
   return (
     <div className="shrink-0 border-b border-slate-200/70 bg-white/60 px-4 md:px-8 py-2.5">
@@ -41,7 +41,7 @@ export function DeckStrip({
         </span>
 
         <div className="min-w-0 flex-1 flex flex-nowrap items-center gap-2 overflow-x-auto sm:flex-wrap sm:overflow-x-visible sm:max-h-24 sm:overflow-y-auto [scrollbar-width:none]">
-          {loading ? (
+          {isLoadingConversation ? (
             <span
               aria-busy="true"
               className="h-7 w-48 rounded-full bg-slate-200/70 animate-pulse"
@@ -81,7 +81,7 @@ export function DeckStrip({
 
                   <button
                     onClick={() => onRemoveProduct(product.id)}
-                    disabled={removing || loading}
+                    disabled={removing || isLoadingConversation}
                     aria-label={`Remove ${title}`}
                     className="ml-1 w-6 h-6 sm:w-5 sm:h-5 shrink-0 rounded-full flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition disabled:cursor-not-allowed"
                   >
@@ -108,9 +108,9 @@ export function DeckStrip({
             })
           )}
 
-          {!loading && !showForm && (
+          {!isLoadingConversation && !showForm && (
             <button
-              onClick={() => setAdding(true)}
+              onClick={() => setIsFormOpen(true)}
               className="inline-flex shrink-0 items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1 text-xs font-semibold text-slate-500 hover:border-blue-400 hover:text-blue-600 transition"
             >
               <svg
@@ -136,12 +136,12 @@ export function DeckStrip({
         <div className="mt-2 flex items-center gap-2">
           <input
             autoFocus={products.length > 0}
-            value={url}
+            value={productUrl}
             disabled={busy}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => setProductUrl(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") onAddProduct();
-              if (e.key === "Escape" && products.length > 0) setAdding(false);
+              if (e.key === "Escape" && products.length > 0) setIsFormOpen(false);
             }}
             placeholder="Paste an Amazon product URL..."
             aria-label="Product URL"
@@ -149,10 +149,10 @@ export function DeckStrip({
           />
           <button
             onClick={onAddProduct}
-            disabled={!url.trim() || busy}
+            disabled={!productUrl.trim() || busy}
             className="h-10 sm:h-9 px-4 rounded-lg bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {loadingProduct ? (
+            {isAddingProduct ? (
               <>
                 <LoadingSpinner size="sm" color="white" />
                 Adding...
@@ -163,7 +163,7 @@ export function DeckStrip({
           </button>
           {products.length > 0 && (
             <button
-              onClick={() => setAdding(false)}
+              onClick={() => setIsFormOpen(false)}
               className="h-10 sm:h-9 px-2 text-xs font-semibold text-slate-400 hover:text-slate-700 transition"
             >
               Close

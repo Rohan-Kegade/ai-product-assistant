@@ -1,28 +1,28 @@
 import { LoadingSpinner } from "../common/LoadingSpinner";
 
 export function ChatInput({
-  question,
-  setQuestion,
+  questionDraft,
+  setQuestionDraft,
   onAskQuestion,
-  productsCount,
-  asking,
-  loading,
+  productCount,
+  isAnswering,
+  isLoadingConversation,
 }) {
-  const isDisabled = productsCount === 0 || asking || loading;
+  const isDisabled = productCount === 0 || isAnswering || isLoadingConversation;
 
   return (
     <div className="pt-3 pb-[env(safe-area-inset-bottom)] border-t border-slate-200/60 shrink-0">
       <div
         className={`relative flex items-center rounded-2xl border transition shadow-sm ${
-          productsCount === 0
+          productCount === 0
             ? "bg-slate-100/70 border-slate-200"
             : "bg-white border-slate-200 focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-500/10"
         }`}
       >
         <input
-          value={question}
+          value={questionDraft}
           disabled={isDisabled}
-          onChange={(e) => setQuestion(e.target.value)}
+          onChange={(e) => setQuestionDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -30,9 +30,9 @@ export function ChatInput({
             }
           }}
           placeholder={
-            loading
+            isLoadingConversation
               ? "Loading conversation..."
-              : productsCount === 0
+              : productCount === 0
                 ? "Add a product to start..."
                 : "Ask about your products..."
           }
@@ -41,10 +41,10 @@ export function ChatInput({
 
         <button
           onClick={onAskQuestion}
-          disabled={!question.trim() || isDisabled}
+          disabled={!questionDraft.trim() || isDisabled}
           className="mr-2 w-10 h-10 rounded-xl bg-slate-900 hover:bg-blue-600 text-white flex items-center justify-center transition disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          {asking ? (
+          {isAnswering ? (
             <LoadingSpinner size="sm" color="white" />
           ) : (
             <svg
