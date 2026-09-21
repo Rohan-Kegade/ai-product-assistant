@@ -6,7 +6,7 @@ import productRouter from "./routes/product.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import conversationRouter from "./routes/conversation.routes.js";
 
-const PORT = process.env.port;
+const PORT = process.env.PORT;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
 
 const app = express();
