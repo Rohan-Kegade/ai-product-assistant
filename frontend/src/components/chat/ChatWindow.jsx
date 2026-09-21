@@ -34,7 +34,7 @@ export function ChatWindow({
   canRetry,
   onRetry,
 }) {
-  // Smoothly scroll the container to the maximum height on content change
+  // Keep the newest message in view.
   useEffect(() => {
     if (containerRef?.current) {
       containerRef.current.scrollTo({

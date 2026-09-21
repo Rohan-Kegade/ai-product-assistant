@@ -2,7 +2,7 @@ import * as productService from "../services/product.service.js";
 import * as conversationService from "../services/conversation.service.js";
 import { validateAmazonProductUrl } from "../utils/amazonUrl.js";
 
-export const addProduct = async (req, res, next) => {
+export const addProduct = async (req, res) => {
   try {
     const { url, conversationId } = req.body;
 

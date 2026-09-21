@@ -2,7 +2,7 @@ import * as conversationService from "../services/conversation.service.js";
 import * as productService from "../services/product.service.js";
 import * as messageService from "../services/message.service.js";
 
-export const removeProductFromConversation = async (req, res, next) => {
+export const removeProductFromConversation = async (req, res) => {
   try {
     const { conversationId, productId } = req.params;
 
@@ -33,7 +33,7 @@ export const removeProductFromConversation = async (req, res, next) => {
   }
 };
 
-export const listConversations = async (req, res, next) => {
+export const listConversations = async (req, res) => {
   try {
     const conversations = await conversationService.listConversations();
 
@@ -47,7 +47,7 @@ export const listConversations = async (req, res, next) => {
 
 const MAX_TITLE_LENGTH = 255;
 
-export const renameConversation = async (req, res, next) => {
+export const renameConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const { title } = req.body;
@@ -80,7 +80,7 @@ export const renameConversation = async (req, res, next) => {
   }
 };
 
-export const deleteConversation = async (req, res, next) => {
+export const deleteConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
@@ -101,7 +101,7 @@ export const deleteConversation = async (req, res, next) => {
   }
 };
 
-export const getConversation = async (req, res, next) => {
+export const getConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
 

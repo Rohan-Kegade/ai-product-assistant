@@ -1,9 +1,9 @@
+import { useRef, useState } from "react";
 import { Sidebar } from "./components/sidebar/Sidebar";
 import { ChatWindow } from "./components/chat/ChatWindow";
 import { ChatInput } from "./components/chat/ChatInput";
 import { DeckStrip } from "./components/deck/DeckStrip";
 import { useProductDeck } from "./hooks/useProductDeck";
-import { useRef, useState } from "react";
 
 export default function App() {
   const {
@@ -38,9 +38,9 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const closeSidebar = () => setSidebarOpen(false);
 
-  // The conversation's name comes from the list (first product's title); the
-  // list refreshes after every add/remove/chat, so it catches up shortly after
-  // a new conversation is created.
+  // The title comes from the conversation list (the LLM-generated title, or
+  // the first product's title until one exists). The list refreshes after
+  // every add/remove/chat, so a new conversation's name shows up shortly after.
   const activeTitle =
     conversations.find((c) => c.id === conversationId)?.title ||
     "New conversation";
@@ -48,7 +48,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f5f7fb] text-slate-900">
       <div className="flex h-dvh overflow-hidden">
-        {/* Sidebar */}
         <Sidebar
           open={sidebarOpen}
           onClose={closeSidebar}
@@ -66,7 +65,6 @@ export default function App() {
           onDeleteConversation={removeConversation}
         />
 
-        {/* Main Workspace */}
         <main className="flex-1 min-w-0 flex flex-col bg-[#f8fafc]">
           <header className="h-14 [@media(max-height:500px)]:h-11 shrink-0 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl flex items-center justify-between px-4 md:px-8">
             <div className="flex min-w-0 items-center gap-3">
@@ -113,7 +111,6 @@ export default function App() {
             onRemoveProduct={removeProduct}
           />
 
-          {/* Toast Notification Banner */}
           {error && (
             <div className="bg-red-50 border-b border-red-200 px-6 py-2.5 flex items-center justify-between">
               <p className="text-xs text-red-700 font-medium">{error}</p>
@@ -126,7 +123,6 @@ export default function App() {
             </div>
           )}
 
-          {/* Chat Workspace */}
           <div className="flex-1 min-h-0 px-4 md:px-6 lg:px-8 pb-3 flex flex-col max-w-5xl mx-auto w-full">
             <div
               ref={chatContainerRef}

@@ -7,6 +7,16 @@ class ApiError extends Error {
   }
 }
 
+async function throwIfNotOk(response) {
+  if (response.ok) return;
+
+  const errorData = await response.json().catch(() => ({}));
+  throw new ApiError(
+    errorData.message || `Request failed with status ${response.status}`,
+    response.status
+  );
+}
+
 async function request(endpoint, options = {}) {
   const config = {
     headers: {
@@ -18,13 +28,7 @@ async function request(endpoint, options = {}) {
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(
-      errorData.message || `Request failed with status ${response.status}`,
-      response.status
-    );
-  }
+  await throwIfNotOk(response);
 
   if (response.status === 204) return null;
 
@@ -108,13 +112,7 @@ export const api = {
       body: JSON.stringify({ conversationId, message, retry }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        errorData.message || `Request failed with status ${response.status}`,
-        response.status
-      );
-    }
+    await throwIfNotOk(response);
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();

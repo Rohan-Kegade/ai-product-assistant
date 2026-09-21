@@ -16,7 +16,7 @@ async function generateAndSaveConversationTitle(conversationId, question) {
   }
 }
 
-export const streamChatReply = async (req, res, next) => {
+export const streamChatReply = async (req, res) => {
   const { conversationId, message, retry } = req.body;
 
   if (!conversationId || typeof conversationId !== "string") {

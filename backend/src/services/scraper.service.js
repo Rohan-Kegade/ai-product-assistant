@@ -1,6 +1,5 @@
 import { chromium } from "playwright";
 
-// BLOCK UNNECESSARY RESOURCES
 async function optimizePage(page) {
   await page.route("**/*", async (route) => {
     const request = route.request();
@@ -39,11 +38,9 @@ async function optimizePage(page) {
   });
 }
 
-// SCRAPE PRODUCT
 export async function scrapeProduct(url) {
   const start = Date.now();
 
-  // LAUNCH BROWSER
   const browser = await chromium.launch({
     headless: true,
 
@@ -51,7 +48,6 @@ export async function scrapeProduct(url) {
   });
 
   try {
-    // CREATE CONTEXT
     const context = await browser.newContext({
       viewport: {
         width: 1280,
@@ -61,18 +57,15 @@ export async function scrapeProduct(url) {
       serviceWorkers: "block",
     });
 
-    // CREATE PAGE
     const page = await context.newPage();
 
     await optimizePage(page);
 
-    // LOAD AMAZON PAGE
     await page.goto(url, {
       waitUntil: "domcontentloaded",
       timeout: 20000,
     });
 
-    // WAIT FOR PRODUCT TITLE
     try {
       await page.waitForSelector("#productTitle", {
         state: "attached",
@@ -82,23 +75,19 @@ export async function scrapeProduct(url) {
       console.log("Product title not found:", url);
     }
 
-    // EXTRACT PRODUCT
     const product = await page.evaluate(() => {
-      // TEXT HELPER
       const text = (selector) => {
         const element = document.querySelector(selector);
 
         return element?.innerText?.replace(/\s+/g, " ")?.trim() || null;
       };
 
-      // ATTRIBUTE HELPER
       const attr = (selector, attribute) => {
         const element = document.querySelector(selector);
 
         return element?.getAttribute(attribute) || null;
       };
 
-      // OFFERS
       const offers = Array.from(
         document.querySelectorAll(".vsx__offers .offers-items"),
       ).map((offer) => {
@@ -127,7 +116,6 @@ export async function scrapeProduct(url) {
         };
       });
 
-      // PRODUCT DETAILS
       const productDetails = {};
 
       document.querySelectorAll("#prodDetails tr").forEach((row) => {
@@ -146,7 +134,6 @@ export async function scrapeProduct(url) {
         }
       });
 
-      // TECHNICAL DETAILS
       const techDetails = {};
 
       document.querySelectorAll("#tech table tr").forEach((row) => {
@@ -165,10 +152,8 @@ export async function scrapeProduct(url) {
         }
       });
 
-      // ASIN
       const asin = productDetails["ASIN"] || null;
 
-      // RETURN PRODUCT
       return {
         title: text("#productTitle"),
 
