@@ -57,12 +57,17 @@ export function LogoMark({ size = 40, className = "" }) {
   );
 }
 
-// Mark + "ProductIQ" wordmark for dark backgrounds (the sidebar).
-export function Logo({ size = 40 }) {
+// Mark + "ProductIQ" wordmark. `tone="dark"` (the default) is for dark
+// backgrounds like the sidebar; `tone="light"` for white pages.
+export function Logo({ size = 40, tone = "dark" }) {
   return (
     <div className="flex items-center gap-3">
       <LogoMark size={size} />
-      <span className="text-[19px] font-bold tracking-tight text-white">
+      <span
+        className={`text-[19px] font-bold tracking-tight ${
+          tone === "light" ? "text-slate-900" : "text-white"
+        }`}
+      >
         Product
         <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
           IQ
