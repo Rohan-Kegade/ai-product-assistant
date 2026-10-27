@@ -23,7 +23,7 @@ export const addProduct = async (req, res) => {
     let conversation = null;
 
     if (conversationId) {
-      conversation = await conversationService.getConversationById(conversationId);
+      conversation = await conversationService.getConversationById(conversationId, req.user.id);
 
       if (!conversation) {
         return res.status(404).json({ message: "Conversation not found" });
@@ -45,7 +45,7 @@ export const addProduct = async (req, res) => {
     // Create the conversation only after the product is in hand, so a failed
     // scrape doesn't leave an empty conversation behind.
     if (!conversation) {
-      conversation = await conversationService.createConversation();
+      conversation = await conversationService.createConversation(req.user.id);
     }
 
     await productService.linkProductToConversation(conversation.id, product.id);

@@ -7,8 +7,18 @@ class ApiError extends Error {
   }
 }
 
-async function throwIfNotOk(response) {
+// Called when the server rejects the session (expired or logged out
+// elsewhere), so the app can send the user back to the login page.
+let onUnauthorized = () => {};
+
+export function setUnauthorizedHandler(handler) {
+  onUnauthorized = handler;
+}
+
+async function throwIfNotOk(response, { notifyUnauthorized = true } = {}) {
   if (response.ok) return;
+
+  if (response.status === 401 && notifyUnauthorized) onUnauthorized();
 
   const errorData = await response.json().catch(() => ({}));
   throw new ApiError(
@@ -17,18 +27,22 @@ async function throwIfNotOk(response) {
   );
 }
 
-async function request(endpoint, options = {}) {
+// `notifyUnauthorized: false` is for the auth calls themselves, where a 401
+// is an expected answer (wrong password, not logged in) rather than an
+// expired session.
+async function request(endpoint, { notifyUnauthorized, ...options } = {}) {
   const config = {
+    credentials: "include",
+    ...options,
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
-    ...options,
   };
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-  await throwIfNotOk(response);
+  await throwIfNotOk(response, { notifyUnauthorized });
 
   if (response.status === 204) return null;
 
@@ -36,6 +50,47 @@ async function request(endpoint, options = {}) {
 }
 
 export const api = {
+  /**
+   * Creates an account and logs it in. Resolves to { id, name, email }.
+   */
+  async signup({ name, email, password }) {
+    const data = await request("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password }),
+      notifyUnauthorized: false,
+    });
+    return data.user;
+  },
+
+  /**
+   * Logs in. Resolves to { id, name, email }.
+   */
+  async login({ email, password }) {
+    const data = await request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      notifyUnauthorized: false,
+    });
+    return data.user;
+  },
+
+  async logout() {
+    await request("/auth/logout", { method: "POST", notifyUnauthorized: false });
+  },
+
+  /**
+   * Resolves to the logged-in user, or null if there is no valid session.
+   */
+  async getCurrentUser() {
+    try {
+      const data = await request("/auth/me", { notifyUnauthorized: false });
+      return data.user;
+    } catch (err) {
+      if (err.status === 401) return null;
+      throw err;
+    }
+  },
+
   /**
    * Scrapes (or reuses) a product and links it to a conversation. Omit
    * conversationId to start a new conversation. Resolves to
@@ -108,6 +163,7 @@ export const api = {
   async streamAnswer(conversationId, message, onChunk, { retry = false } = {}) {
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ conversationId, message, retry }),
     });

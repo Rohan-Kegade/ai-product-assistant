@@ -49,7 +49,11 @@ cp backend/.env.sample backend/.env
 cp frontend/.env.sample frontend/.env
 ```
 
-In `backend/.env`, set `PORT=5000`, your `GEMINI_API_KEY`, and your MySQL `DB_PASSWORD`.
+In `backend/.env`, set `PORT=5000`, your `GEMINI_API_KEY`, your MySQL `DB_PASSWORD`, and a random `JWT_SECRET` (it signs login sessions):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
 In `frontend/.env`, set `VITE_API_URL=http://localhost:5000/api`.
 
 **4. Create the tables**

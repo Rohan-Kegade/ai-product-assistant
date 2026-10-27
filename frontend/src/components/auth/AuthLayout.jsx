@@ -82,3 +82,16 @@ export function AuthSubmitButton({ isSubmitting, children }) {
 
 export const authLinkClass =
   "font-semibold text-blue-600 hover:text-blue-700";
+
+export function AuthFormError({ message }) {
+  if (!message) return null;
+
+  return (
+    <p
+      role="alert"
+      className="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-medium text-red-700"
+    >
+      {message}
+    </p>
+  );
+}

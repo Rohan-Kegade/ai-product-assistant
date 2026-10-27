@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
+import { useAuth } from "../hooks/useAuth";
 import {
   AuthField,
+  AuthFormError,
   AuthLayout,
   AuthSubmitButton,
   authLinkClass,
@@ -17,25 +19,33 @@ function validate({ email, password }) {
 }
 
 export function LoginPage() {
-  const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const updateField = (field) => (event) =>
     setForm((current) => ({ ...current, [field]: event.target.value }));
 
-  const handleSubmit = (event) => {
+  // On success the route guard moves the now logged-in user into the app.
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
 
     const nextErrors = validate(form);
     setErrors(nextErrors);
+    setSubmitError(null);
     if (Object.keys(nextErrors).length > 0) return;
 
-    // The backend has no auth endpoints yet, so a valid form goes straight
-    // into the app.
     setIsSubmitting(true);
-    navigate("/app");
+
+    try {
+      await login({ email: form.email, password: form.password });
+    } catch (err) {
+      setSubmitError(err.message || "Something went wrong. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -52,6 +62,7 @@ export function LoginPage() {
       }
     >
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        <AuthFormError message={submitError} />
         <AuthField
           label="Email"
           type="email"

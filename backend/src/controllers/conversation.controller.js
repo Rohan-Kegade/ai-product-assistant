@@ -12,7 +12,7 @@ export const removeProductFromConversation = async (req, res) => {
       return res.status(400).json({ message: "productId must be an integer" });
     }
 
-    const conversation = await conversationService.getConversationById(conversationId);
+    const conversation = await conversationService.getConversationById(conversationId, req.user.id);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -35,7 +35,7 @@ export const removeProductFromConversation = async (req, res) => {
 
 export const listConversations = async (req, res) => {
   try {
-    const conversations = await conversationService.listConversations();
+    const conversations = await conversationService.listConversations(req.user.id);
 
     return res.status(200).json({ conversations });
   } catch (error) {
@@ -64,7 +64,7 @@ export const renameConversation = async (req, res) => {
       });
     }
 
-    const conversation = await conversationService.getConversationById(conversationId);
+    const conversation = await conversationService.getConversationById(conversationId, req.user.id);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -84,7 +84,7 @@ export const deleteConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
-    const conversation = await conversationService.getConversationById(conversationId);
+    const conversation = await conversationService.getConversationById(conversationId, req.user.id);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
@@ -105,7 +105,7 @@ export const getConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
 
-    const conversation = await conversationService.getConversationById(conversationId);
+    const conversation = await conversationService.getConversationById(conversationId, req.user.id);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });

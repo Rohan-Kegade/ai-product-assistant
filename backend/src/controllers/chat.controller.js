@@ -33,7 +33,7 @@ export const streamChatReply = async (req, res) => {
 
   try {
     const conversation =
-      await conversationService.getConversationById(conversationId);
+      await conversationService.getConversationById(conversationId, req.user.id);
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });

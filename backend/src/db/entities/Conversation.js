@@ -10,6 +10,14 @@ export const Conversation = new EntitySchema({
       primary: true,
       generated: "uuid",
     },
+    // Null only for conversations created before accounts existed; those
+    // belong to no one and are never listed.
+    userId: {
+      type: "varchar",
+      length: 36,
+      nullable: true,
+      name: "user_id",
+    },
     // Set once from the first user question (LLM-generated); null until then.
     title: {
       type: "varchar",
@@ -28,6 +36,13 @@ export const Conversation = new EntitySchema({
     },
   },
   relations: {
+    user: {
+      type: "many-to-one",
+      target: "User",
+      joinColumn: { name: "user_id" },
+      inverseSide: "conversations",
+      onDelete: "CASCADE",
+    },
     conversationProducts: {
       type: "one-to-many",
       target: "ConversationProduct",

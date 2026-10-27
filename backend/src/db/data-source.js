@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import "dotenv/config";
 import { DataSource } from "typeorm";
+import { User } from "./entities/User.js";
 import { Conversation } from "./entities/Conversation.js";
 import { Product } from "./entities/Product.js";
 import { ConversationProduct } from "./entities/ConversationProduct.js";
@@ -13,7 +14,7 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || "root",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "ai_product_assistant",
-  entities: [Conversation, Product, ConversationProduct, Message],
+  entities: [User, Conversation, Product, ConversationProduct, Message],
   migrations: ["src/db/migrations/*.js"],
   synchronize: false,
 });

@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { Logo, LogoMark } from "../components/common/Logo";
+import { useAuth } from "../hooks/useAuth";
 
 const FEATURES = [
   {
@@ -95,6 +96,8 @@ function ChatPreview() {
 }
 
 export function LandingPage() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
@@ -103,18 +106,29 @@ export function LandingPage() {
             <Logo size={34} tone="light" />
           </Link>
           <nav className="flex items-center gap-2">
-            <Link
-              to="/login"
-              className="px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-            >
-              Log in
-            </Link>
-            <Link
-              to="/signup"
-              className="px-3.5 py-2 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-blue-600 text-white transition"
-            >
-              Sign up
-            </Link>
+            {user ? (
+              <Link
+                to="/app"
+                className="px-3.5 py-2 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-blue-600 text-white transition"
+              >
+                Open app
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-3.5 py-2 rounded-xl text-sm font-semibold bg-slate-900 hover:bg-blue-600 text-white transition"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

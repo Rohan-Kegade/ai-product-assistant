@@ -1,6 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { ConversationList } from "./ConversationList";
 import { Logo, LogoMark } from "../common/Logo";
+import { useNavigate } from "react-router";
+import { useAuth } from "../../hooks/useAuth";
 
 const COLLAPSED_KEY = "sidebarCollapsed";
 const DESKTOP_QUERY = "(min-width: 1024px)";
@@ -72,6 +74,8 @@ export function Sidebar({
   onRenameConversation,
   onDeleteConversation,
 }) {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const isDesktop = useIsDesktop();
   // Collapsing only applies on desktop; on phones it is always the drawer.
@@ -80,6 +84,13 @@ export function Sidebar({
   const setCollapsedPersisted = (value) => {
     setCollapsed(value);
     writeCollapsed(value);
+  };
+
+  // Leave the protected page first, so the route guard doesn't bounce the
+  // logged-out user to /login.
+  const handleLogout = () => {
+    navigate("/", { replace: true });
+    logout();
   };
 
   // Below `lg` the sidebar is an off-canvas drawer; Escape closes it.
@@ -153,6 +164,24 @@ export function Sidebar({
             onRename={onRenameConversation}
             onDelete={onDeleteConversation}
           />
+
+          <div className="mx-5 border-t border-white/[0.06]" />
+
+          <div className="flex items-center gap-3 px-5 py-4">
+            <div className="w-8 h-8 shrink-0 rounded-full bg-white/[0.08] flex items-center justify-center text-xs font-bold uppercase">
+              {user?.name?.[0]}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold truncate">{user?.name}</p>
+              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+            </div>
+            <IconButton label="Log out" onClick={handleLogout}>
+              <path
+                {...pathProps}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </IconButton>
+          </div>
         </div>
 
         {/* Collapsed rail (desktop only). */}
@@ -173,6 +202,13 @@ export function Sidebar({
 
           <IconButton label="New conversation" onClick={onNewConversation}>
             <path {...pathProps} d="M12 5v14M5 12h14" />
+          </IconButton>
+
+          <IconButton label="Log out" onClick={handleLogout} className="mt-auto mb-4">
+            <path
+              {...pathProps}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
           </IconButton>
         </div>
       </aside>
