@@ -115,6 +115,15 @@ export function useProductDeck() {
     openConversation(id);
   };
 
+  // Re-fetches the list and the open conversation after products changed
+  // outside this view (e.g. removed from settings).
+  const reloadConversations = () => {
+    refreshConversations();
+    if (activeConversationIdRef.current) {
+      loadConversationContents(activeConversationIdRef.current);
+    }
+  };
+
   const renameConversation = async (id, title) => {
     try {
       const renamed = await api.renameConversation(id, title);
@@ -314,6 +323,7 @@ export function useProductDeck() {
     startNewConversation,
     renameConversation,
     removeConversation,
+    reloadConversations,
     productUrl,
     setProductUrl,
     products,

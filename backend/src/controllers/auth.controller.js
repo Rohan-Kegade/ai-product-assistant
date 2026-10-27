@@ -1,17 +1,12 @@
 import * as authService from "../services/auth.service.js";
+import { validateName, validatePassword } from "../utils/userValidation.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MAX_NAME_LENGTH = 100;
 const MAX_EMAIL_LENGTH = 255;
-const MIN_PASSWORD_LENGTH = 8;
-// bcrypt ignores everything past 72 bytes.
-const MAX_PASSWORD_BYTES = 72;
 
 function validateSignup({ name, email, password }) {
-  if (typeof name !== "string" || !name.trim()) return "Name is required.";
-  if (name.trim().length > MAX_NAME_LENGTH) {
-    return `Name must be at most ${MAX_NAME_LENGTH} characters.`;
-  }
+  const nameError = validateName(name);
+  if (nameError) return nameError;
 
   if (
     typeof email !== "string" ||
@@ -21,14 +16,7 @@ function validateSignup({ name, email, password }) {
     return "Enter a valid email.";
   }
 
-  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) {
-    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-  }
-  if (Buffer.byteLength(password) > MAX_PASSWORD_BYTES) {
-    return "Password is too long.";
-  }
-
-  return null;
+  return validatePassword(password);
 }
 
 export const signup = async (req, res) => {

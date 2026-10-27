@@ -92,6 +92,51 @@ export const api = {
   },
 
   /**
+   * Changes the user's name. Resolves to the updated user.
+   */
+  async updateProfile({ name }) {
+    const data = await request("/account/profile", {
+      method: "PATCH",
+      body: JSON.stringify({ name }),
+    });
+    return data.user;
+  },
+
+  async changePassword({ currentPassword, newPassword }) {
+    await request("/account/password", {
+      method: "PUT",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  /**
+   * Lists every product in the user's conversations, each with
+   * `conversationCount`.
+   */
+  async listMyProducts() {
+    const data = await request("/account/products");
+    return data.products;
+  },
+
+  /**
+   * Removes a product from all of the user's conversations.
+   */
+  async removeMyProduct(productId) {
+    await request(`/account/products/${productId}`, { method: "DELETE" });
+  },
+
+  /**
+   * Permanently deletes the account and all its conversations. The server
+   * also clears the session cookie.
+   */
+  async deleteAccount({ password }) {
+    await request("/account", {
+      method: "DELETE",
+      body: JSON.stringify({ password }),
+    });
+  },
+
+  /**
    * Scrapes (or reuses) a product and links it to a conversation. Omit
    * conversationId to start a new conversation. Resolves to
    * { conversationId, product }.

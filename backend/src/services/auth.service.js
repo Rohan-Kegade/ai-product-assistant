@@ -33,8 +33,8 @@ export function normalizeEmail(email) {
   return email.trim().toLowerCase();
 }
 
-export function toPublicUser({ id, name, email }) {
-  return { id, name, email };
+export function toPublicUser({ id, name, email, createdAt }) {
+  return { id, name, email, createdAt };
 }
 
 export async function findUserById(userId) {
@@ -53,6 +53,29 @@ export async function createUser({ name, email, password }) {
   });
 
   return userRepository().save(user);
+}
+
+export async function updateUserName(userId, name) {
+  await userRepository().update({ id: userId }, { name: name.trim() });
+
+  return findUserById(userId);
+}
+
+export async function updateUserPassword(userId, password) {
+  await userRepository().update(
+    { id: userId },
+    { passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS) },
+  );
+}
+
+// FKs cascade: removes the user's conversations, their messages and product
+// links. Scraped products are shared, so they are kept.
+export async function deleteUser(userId) {
+  await userRepository().delete({ id: userId });
+}
+
+export async function passwordMatches(user, password) {
+  return bcrypt.compare(password, user.passwordHash);
 }
 
 // Resolves to the user when the credentials match, otherwise null.

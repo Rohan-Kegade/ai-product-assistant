@@ -7,6 +7,7 @@ import productRouter from "./routes/product.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import conversationRouter from "./routes/conversation.routes.js";
 import authRouter from "./routes/auth.routes.js";
+import accountRouter from "./routes/account.routes.js";
 import { requireAuth } from "./middleware/requireAuth.js";
 
 const PORT = process.env.PORT;
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
+app.use("/api/account", requireAuth, accountRouter);
 app.use("/api/products", requireAuth, productRouter);
 app.use("/api/chat", requireAuth, chatRouter);
 app.use("/api/conversations", requireAuth, conversationRouter);

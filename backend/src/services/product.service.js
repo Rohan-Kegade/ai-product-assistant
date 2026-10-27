@@ -68,6 +68,43 @@ export async function unlinkProductFromConversation(conversationId, productId) {
   await conversationProductRepository().delete({ conversationId, productId });
 }
 
+// Every product linked to at least one of the user's conversations, most
+// recently added first, with how many of those conversations use it.
+export async function listProductsForUser(userId) {
+  const rows = await AppDataSource.query(
+    `SELECT p.id, p.title, p.price, p.rating, p.review_count AS reviewCount,
+            p.url,
+            COUNT(DISTINCT cp.conversation_id) AS conversationCount,
+            MAX(cp.added_at) AS lastAddedAt
+       FROM products p
+       JOIN conversation_products cp ON cp.product_id = p.id
+       JOIN conversations c ON c.id = cp.conversation_id
+      WHERE c.user_id = ?
+      GROUP BY p.id, p.title, p.price, p.rating, p.review_count, p.url
+      ORDER BY lastAddedAt DESC, p.id DESC`,
+    [userId],
+  );
+
+  return rows.map((row) => ({
+    ...toPublicProduct(row),
+    conversationCount: Number(row.conversationCount),
+    lastAddedAt: row.lastAddedAt,
+  }));
+}
+
+// Removes the product from all of the user's conversations. Returns how many
+// conversations it was removed from.
+export async function unlinkProductFromUser(userId, productId) {
+  const result = await AppDataSource.query(
+    `DELETE cp FROM conversation_products cp
+       JOIN conversations c ON c.id = cp.conversation_id
+      WHERE c.user_id = ? AND cp.product_id = ?`,
+    [userId, productId],
+  );
+
+  return result.affectedRows ?? 0;
+}
+
 export async function listProductsForConversation(conversationId) {
   const links = await conversationProductRepository().find({
     where: { conversationId },

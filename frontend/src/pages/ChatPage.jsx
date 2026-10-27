@@ -3,6 +3,7 @@ import { Sidebar } from "../components/sidebar/Sidebar";
 import { ChatWindow } from "../components/chat/ChatWindow";
 import { ChatInput } from "../components/chat/ChatInput";
 import { DeckStrip } from "../components/deck/DeckStrip";
+import { SettingsModal } from "../components/settings/SettingsModal";
 import { useProductDeck } from "../hooks/useProductDeck";
 
 export function ChatPage() {
@@ -13,6 +14,7 @@ export function ChatPage() {
     startNewConversation,
     renameConversation,
     removeConversation,
+    reloadConversations,
     productUrl,
     setProductUrl,
     products,
@@ -37,6 +39,7 @@ export function ChatPage() {
   // Off-canvas sidebar on screens narrower than `lg`.
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const closeSidebar = () => setSidebarOpen(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // The title comes from the conversation list (the LLM-generated title, or
   // the first product's title until one exists). The list refreshes after
@@ -63,6 +66,10 @@ export function ChatPage() {
           }}
           onRenameConversation={renameConversation}
           onDeleteConversation={removeConversation}
+          onOpenSettings={() => {
+            setSettingsOpen(true);
+            closeSidebar();
+          }}
         />
 
         <main className="flex-1 min-w-0 flex flex-col bg-[#f8fafc]">
@@ -151,6 +158,13 @@ export function ChatPage() {
           </div>
         </main>
       </div>
+
+      {settingsOpen && (
+        <SettingsModal
+          onClose={() => setSettingsOpen(false)}
+          onProductsChanged={reloadConversations}
+        />
+      )}
     </div>
   );
 }
